@@ -8,7 +8,7 @@ class SplashScreen extends StatelessWidget {
   SplashScreen({super.key});
 
   // ignore: unused_field
-  final _controller = Get.put(SplashController()); // To call the onready
+  final _controller = Get.put(SplashController()); 
 
   @override
   Widget build(BuildContext context) {

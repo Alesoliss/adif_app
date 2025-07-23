@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.sun_corp_app.albatros"
+    namespace = "com.adif.edu_app"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
-    compileOptions {
+    compileOptions { 
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.sun_corp_app.albatros"
+        applicationId = "com.adif.edu_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

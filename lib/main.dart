@@ -20,15 +20,15 @@ class MyApp extends StatelessWidget {
       getPages: MainPages.pages,
 
       supportedLocales: const [
-        Locale('en', ''), // English, no country code
-        Locale('es', ''), // Spanish, no country code
+        Locale('en', ''),
+        Locale('es', ''),
       ],
       locale: Get.deviceLocale,
       fallbackLocale: const Locale('en', ''),
      
       theme: FlexThemeData.light(
         colors: const FlexSchemeColor(
-          primary: Color(0xFFfec90b),
+          primary: Color.fromARGB(255, 11, 145, 254),
 
           primaryContainer: Color(0xffffffff),
           secondary: Color(0xffffffff),
