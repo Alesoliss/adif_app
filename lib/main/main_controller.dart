@@ -1,4 +1,5 @@
 import 'package:edu_app/presentation/home/home_screen.dart';
+import 'package:edu_app/presentation/partner/list/partner_screen.dart';
 import 'package:edu_app/presentation/products/list/products_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,7 +14,7 @@ class MainController extends GetxController {
   void onReady() {
     stackPages.value = [
       HomeScreen(),
-      _PlaceholderScreen(title: 'Categorías'),
+       PartnerScreen(),
       _PlaceholderScreen(title: 'Favoritos'),
       const ProductsScreen(),
       _PlaceholderScreen(title: 'Perfil'),

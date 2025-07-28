@@ -84,6 +84,14 @@ class HomeScreen extends StatelessWidget {
                             label: "Clientes",
                             color: Theme.of(context).colorScheme.primary,
                             iconColor: Theme.of(context).colorScheme.primary,
+                            onTap: () => Get.toNamed(MainRoutes.addPartner, arguments: {'esProveedor': false}),
+                          ),
+                          HomeCard(
+                            icon: LucideIcons.userPlus,
+                            label: "Proveedores",
+                            color: Theme.of(context).colorScheme.primary,
+                            iconColor: Theme.of(context).colorScheme.primary,
+                            onTap: () => Get.toNamed(MainRoutes.addPartner, arguments: {'esProveedor': true}),
                           ),
                           HomeCard(
                             icon: LucideIcons.box,
@@ -97,18 +105,21 @@ class HomeScreen extends StatelessWidget {
                             label: "Registrar venta",
                             color: Theme.of(context).colorScheme.secondary,
                             iconColor: Theme.of(context).colorScheme.primary,
+                               onTap: () => Get.toNamed(MainRoutes.addBuySell, arguments: {'esCompra': false}),
                           ),
                           HomeCard(
                             icon: LucideIcons.shoppingCart,
                             label: "Registrar compra",
                             color: Theme.of(context).colorScheme.secondary,
                             iconColor: Theme.of(context).colorScheme.primary,
+                            onTap: () => Get.toNamed(MainRoutes.addBuySell, arguments: {'esCompra': true}),
                           ),
                           HomeCard(
                             icon: LucideIcons.barChart,
                             label: "Reporte",
                             color: Theme.of(context).colorScheme.secondary,
                             iconColor: Theme.of(context).colorScheme.primary,
+                            
                           ),
                           HomeCard(
                             icon: LucideIcons.downloadCloud,

@@ -24,4 +24,5 @@ class HomeController extends GetxController {
     {'nombre': 'Juan Pérez', 'deuda': 100},
     {'nombre': 'Ferretería Sampedrana', 'deuda': 350},
   ].obs;
+  
 }
