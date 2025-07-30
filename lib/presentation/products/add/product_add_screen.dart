@@ -106,18 +106,25 @@ class AgregarProductoScreen extends StatelessWidget {
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 12,
                         ),
-                        enabledBorder: const UnderlineInputBorder(
+                        enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: Color(0xFFE0E0E0),
+                            color: ctrl.nombreInvalido
+                                ? Colors.red
+                                : const Color(0xFFE0E0E0),
                             width: 1.3,
                           ),
                         ),
                         focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: ctrl.nombreInvalido
+                                ? Colors.red
+                                : Theme.of(context).colorScheme.primary,
                             width: 1.6,
                           ),
                         ),
+                        errorText: ctrl.nombreInvalido
+                            ? 'Este campo es obligatorio'
+                            : null,
                       ),
                     ),
                   ),
@@ -160,18 +167,25 @@ class AgregarProductoScreen extends StatelessWidget {
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12,
                               ),
-                              enabledBorder: const UnderlineInputBorder(
+                              enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
-                                  color: Color(0xFFE0E0E0),
+                                  color: ctrl.precioInvalido
+                                      ? Colors.red
+                                      : const Color(0xFFE0E0E0),
                                   width: 1.3,
                                 ),
                               ),
                               focusedBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: ctrl.precioInvalido
+                                      ? Colors.red
+                                      : Theme.of(context).colorScheme.primary,
                                   width: 1.6,
                                 ),
                               ),
+                              errorText: ctrl.precioInvalido
+                                  ? 'Precio inválido'
+                                  : null,
                             ),
                           ),
                         ),
@@ -259,18 +273,25 @@ class AgregarProductoScreen extends StatelessWidget {
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12,
                               ),
-                              enabledBorder: const UnderlineInputBorder(
+                              enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
-                                  color: Color(0xFFE0E0E0),
+                                  color: ctrl.stockInvalido
+                                      ? Colors.red
+                                      : const Color(0xFFE0E0E0),
                                   width: 1.3,
                                 ),
                               ),
                               focusedBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: ctrl.stockInvalido
+                                      ? Colors.red
+                                      : Theme.of(context).colorScheme.primary,
                                   width: 1.6,
                                 ),
                               ),
+                              errorText: ctrl.stockInvalido
+                                  ? 'Stock inválido'
+                                  : null,
                             ),
                           ),
                         ),
@@ -415,8 +436,15 @@ class AgregarProductoScreen extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () async {
                         await ctrl.validateAndSave();
-                        if (context.mounted) Navigator.pop(context);
+                        // Solo salir si todo es válido
+                        if (!ctrl.nombreInvalido &&
+                            !ctrl.precioInvalido &&
+                            !ctrl.stockInvalido &&
+                            context.mounted) {
+                          Navigator.pop(context);
+                        }
                       },
+
                       style: FilledButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,

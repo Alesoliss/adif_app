@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:edu_app/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:edu_app/services/services.dart';
+import 'package:image/image.dart' as img;
 
 class ProductoAddController extends ChangeNotifier {
   final int? id; // ID del producto (null si es nuevo)
@@ -88,11 +89,11 @@ class ProductoAddController extends ChangeNotifier {
       );
 
       if (id == null) {
-        await DatabaseHelper.insert(
+        final nuevoId = await DatabaseHelper.insert(
           ServiceStrings.productos,
           producto.toJson(),
         );
-        debugPrint("✅ Producto guardado: ${producto.nombre}");
+        debugPrint("✅ Guardado con éxito: ${producto.nombre} con ID: $nuevoId");
         limpiar();
       } else {
         await DatabaseHelper.update(
@@ -100,10 +101,10 @@ class ProductoAddController extends ChangeNotifier {
           producto.toJson(),
           id!,
         );
-        debugPrint("✏️ Producto actualizado: ${producto.nombre}");
+        debugPrint("✏️ Editado con éxito: ${producto.nombre}");
       }
     } catch (e, st) {
-      debugPrint("❌ Error al guardar producto: $e\n$st");
+      debugPrint("❌ No se pudo guardar: $e\n$st");
     }
   }
 
@@ -112,10 +113,28 @@ class ProductoAddController extends ChangeNotifier {
     try {
       fotoPath = path;
       final file = File(path);
-      imgBytes = await file.readAsBytes();
+      final bytes = await file.readAsBytes();
+
+      // Decodifica la imagen
+      final originalImage = img.decodeImage(bytes);
+      if (originalImage == null) {
+        throw Exception("No se pudo decodificar la imagen");
+      }
+
+      // Redimensionar si es necesario
+      img.Image resized = originalImage;
+      if (originalImage.width > 720) {
+        final newHeight = (720 * originalImage.height / originalImage.width)
+            .round();
+        resized = img.copyResize(originalImage, width: 720, height: newHeight);
+      }
+
+      // Codificar nuevamente a PNG
+      imgBytes = img.encodePng(resized);
+
       notifyListeners();
     } catch (e) {
-      debugPrint("❌ Error al leer imagen: $e");
+      debugPrint("❌ Error al procesar imagen: $e");
     }
   }
 

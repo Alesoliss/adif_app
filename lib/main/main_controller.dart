@@ -16,7 +16,7 @@ class MainController extends GetxController {
       HomeScreen(),
        PartnerScreen(),
       _PlaceholderScreen(title: 'Favoritos'),
-      const ProductsScreen(),
+       ProductsScreen(),
       _PlaceholderScreen(title: 'Perfil'),
     ];
     selectedPage.value = 0;
