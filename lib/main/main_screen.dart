@@ -131,7 +131,7 @@ class MainScreen extends StatelessWidget {
                           Text(
                             [
                               'Inicio',
-                              'Clientes',
+                              'Socios',
                               'Ventas',
                               'Productos',
                               'Compra',
