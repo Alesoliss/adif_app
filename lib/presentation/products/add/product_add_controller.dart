@@ -1,77 +1,151 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:edu_app/models/product_model.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
+import 'package:edu_app/services/services.dart';
 
 class ProductoAddController extends ChangeNotifier {
+  final int? id; // ID del producto (null si es nuevo)
+
+  ProductoAddController({this.id}) {
+    if (id != null) _loadProducto(id!);
+  }
+
+  // Controladores para inputs
   final TextEditingController nombre = TextEditingController();
-  final TextEditingController descripcion = TextEditingController();
-  final TextEditingController precioVenta = TextEditingController();
-  final TextEditingController precioCompra = TextEditingController();
+  final TextEditingController precio = TextEditingController();
+  final TextEditingController costo = TextEditingController();
   final TextEditingController stock = TextEditingController();
-  final TextEditingController unidad = TextEditingController();
-  final TextEditingController categoria = TextEditingController();
-  final TextEditingController codigoBarras = TextEditingController();
   final TextEditingController notas = TextEditingController();
+  final TextEditingController categoriaId =
+      TextEditingController(); // como ID opcional
 
-  String? fotoPath;
   bool activo = true;
+  bool esServicio = false;
+  List<int>? imgBytes;
+  String? fotoPath;
 
-  Future<void> pickImage() async {
-    final picker = ImagePicker();
-    final img = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (img != null) {
-      fotoPath = img.path;
+  // Flags de validación
+  bool nombreInvalido = false;
+  bool precioInvalido = false;
+  bool stockInvalido = false;
+
+  // ----------- Cargar producto si es edición -----------
+  Future<void> _loadProducto(int id) async {
+    try {
+      final db = await DatabaseHelper.initDB();
+      final result = await db.query(
+        ServiceStrings.productos,
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      if (result.isNotEmpty) {
+        final producto = ProductoModel.fromJson(result.first);
+        nombre.text = producto.nombre;
+        precio.text = producto.precio.toString();
+        costo.text = producto.costo?.toString() ?? '';
+        stock.text = producto.stock.toString();
+        categoriaId.text = producto.cateid?.toString() ?? '';
+        notas.text = producto.notas ?? '';
+        activo = producto.activo;
+        esServicio = producto.esServicio;
+        imgBytes = producto.img;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("❌ Error al cargar producto: $e");
+    }
+  }
+
+  // ----------- Validar y guardar -----------
+  Future<void> validateAndSave() async {
+    nombreInvalido = nombre.text.trim().isEmpty;
+    precioInvalido = double.tryParse(precio.text) == null;
+    stockInvalido = double.tryParse(stock.text) == null;
+
+    notifyListeners();
+
+    if (nombreInvalido || precioInvalido || stockInvalido) return;
+
+    await _saveProducto();
+  }
+
+  Future<void> _saveProducto() async {
+    try {
+      final producto = ProductoModel(
+        id: id,
+        nombre: nombre.text.trim(),
+        precio: double.parse(precio.text),
+        costo: costo.text.trim().isEmpty ? null : double.parse(costo.text),
+        stock: double.parse(stock.text),
+        cateid: categoriaId.text.trim().isEmpty
+            ? null
+            : int.tryParse(categoriaId.text),
+        notas: notas.text.trim().isEmpty ? null : notas.text.trim(),
+        activo: activo,
+        esServicio: esServicio,
+        img: imgBytes,
+      );
+
+      if (id == null) {
+        await DatabaseHelper.insert(
+          ServiceStrings.productos,
+          producto.toJson(),
+        );
+        debugPrint("✅ Producto guardado: ${producto.nombre}");
+        limpiar();
+      } else {
+        await DatabaseHelper.update(
+          ServiceStrings.productos,
+          producto.toJson(),
+          id!,
+        );
+        debugPrint("✏️ Producto actualizado: ${producto.nombre}");
+      }
+    } catch (e, st) {
+      debugPrint("❌ Error al guardar producto: $e\n$st");
+    }
+  }
+
+  // ----------- Imagen -----------
+  Future<void> setFotoPath(String path) async {
+    try {
+      fotoPath = path;
+      final file = File(path);
+      imgBytes = await file.readAsBytes();
       notifyListeners();
+    } catch (e) {
+      debugPrint("❌ Error al leer imagen: $e");
     }
   }
 
-  Future<void> saveProducto() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/productos.json');
-    List<ProductoModel> productos = [];
-    if (await file.exists()) {
-      final data = await file.readAsString();
-      final jsonList = jsonDecode(data) as List;
-      productos = jsonList.map((e) => ProductoModel.fromJson(e)).toList();
-    }
-    final uuid = const Uuid().v4();
-    productos.add(ProductoModel(
-      id: uuid,
-      nombre: nombre.text.trim(),
-      descripcion: descripcion.text.trim().isEmpty ? null : descripcion.text.trim(),
-      precioVenta: double.tryParse(precioVenta.text) ?? 0,
-      precioCompra: double.tryParse(precioCompra.text),
-      stock: int.tryParse(stock.text) ?? 0,
-      unidad: unidad.text.trim(),
-      categoria: categoria.text.trim().isEmpty ? null : categoria.text.trim(),
-      codigoBarras: codigoBarras.text.trim().isEmpty ? null : codigoBarras.text.trim(),
-      activo: activo,
-      fechaRegistro: DateTime.now(),
-      notas: notas.text.trim().isEmpty ? null : notas.text.trim(),
-      fotoUrl: fotoPath,
-    ));
-    await file.writeAsString(jsonEncode(productos.map((e) => e.toJson()).toList()));
+  // ----------- Resetear formulario -----------
+  void limpiar() {
+    nombre.clear();
+    precio.clear();
+    costo.clear();
+    stock.clear();
+    categoriaId.clear();
+    notas.clear();
+    activo = true;
+    esServicio = false;
+    fotoPath = null;
+    imgBytes = null;
+
+    nombreInvalido = false;
+    precioInvalido = false;
+    stockInvalido = false;
+
+    notifyListeners();
   }
-void setFotoPath(String path) {
-  fotoPath = path;
-  notifyListeners();
-}
 
-
-
-  void disposeAll() {
+  @override
+  void dispose() {
     nombre.dispose();
-    descripcion.dispose();
-    precioVenta.dispose();
-    precioCompra.dispose();
+    precio.dispose();
+    costo.dispose();
     stock.dispose();
-    unidad.dispose();
-    categoria.dispose();
-    codigoBarras.dispose();
+    categoriaId.dispose();
     notas.dispose();
     super.dispose();
   }

@@ -40,7 +40,7 @@ class DatabaseHelper {
       )
     ''');
 
-    await db.execute('''
+    await db.execute(''' 
       CREATE TABLE productos(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT,
