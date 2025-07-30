@@ -57,7 +57,7 @@ class AddBuySellScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 30),
+             
                   Text(
                     esCompra ? "Información del proveedor" : "Información del cliente",
                     style: const TextStyle(
@@ -75,8 +75,8 @@ class AddBuySellScreen extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: TextField(
+                            readOnly: ctrl.seleccionado,
                             controller: ctrl.socio,
-                            readOnly: true, // para obligar a usar el buscador
                             style: const TextStyle(color: Colors.black87, fontSize: 16),
                             decoration: InputDecoration(
                               labelText: esCompra ? "Proveedor" : "Cliente",
@@ -86,6 +86,7 @@ class AddBuySellScreen extends StatelessWidget {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
+                            
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: ctrl.nombreInvalido ? Colors.red : const Color(0xFFE0E0E0),
@@ -100,7 +101,9 @@ class AddBuySellScreen extends StatelessWidget {
                                   width: 1.6,
                                 ),
                               ),
-                              errorText: ctrl.nombreInvalido ? 'El nombre es obligatorio' : null,
+                              errorText: ctrl.nombreInvalido
+                                ? 'El ${esCompra ? 'proveedor' : 'cliente'} es obligatorio'
+                                : null,
                             ),
                           ),
                         ),
@@ -116,12 +119,13 @@ class AddBuySellScreen extends StatelessWidget {
                             ),
                           ),
                           onPressed: () async {
+                          
                             final selectedPartner = await _openPartnerSelector(
                               context,
                               esCompra: esCompra,
                             );
                             if (selectedPartner != null && context.mounted) {
-                              context.read<BuySellAddController>().setPartner(selectedPartner);
+                              context.read<BuySellAddController>().setPartnerSeleccionado(selectedPartner);
                             }
                           },
                           child: const Icon(Icons.search, color: Colors.white),
@@ -129,6 +133,149 @@ class AddBuySellScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+
+// --- Row de Producto + botón “+” ---
+Row(
+  children: [
+    Expanded(
+      flex: 3,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: TextField(
+          controller: ctrl.producto,
+          readOnly: false, // o ctrl.productoSeleccionado si quieres que pase a solo-lectura tras elegir
+          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          decoration: InputDecoration(
+            labelText: 'Producto',
+            hintText: 'Selecciona o escribe un producto',
+            labelStyle: const TextStyle(
+              color: Color(0xFF8A8A8A),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          
+          ),
+        ),
+      ),
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      flex: 1,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.all(0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        onPressed: () async {
+          // Aquí abres tu selector de productos (similiar a _openPartnerSelector)
+          if (ctrl.producto.text.trim().length > 0) {
+            
+          }else{ 
+            print("AGREGANDO LLISTAAAAA");
+          }
+          // final selectedProduct = await _openProductSelector(context);
+          // if (selectedProduct != null && context.mounted) {
+          //   context.read<BuySellAddController>().addProduct(selectedProduct);
+          // }
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    ),
+  ],
+),
+if (ctrl.detalles.isNotEmpty) ...[
+  Text('Detalles:', style: TextStyle(fontWeight: FontWeight.bold)),
+  const SizedBox(height: 8),
+  ListView.separated(
+    physics: NeverScrollableScrollPhysics(),
+    shrinkWrap: true,
+    itemCount: ctrl.detalles.length,
+    separatorBuilder: (_, __) => const Divider(),
+    itemBuilder: (_, i) {
+      final d = ctrl.detalles[i];
+      return ListTile(
+        leading: Text('${d.linea}.'),
+        title: Text('Producto ID: ${d.productoId}'),
+        subtitle: Text(
+          'Precio: ${d.precio.toStringAsFixed(2)}  ×  Cantidad: ${d.cantidad.toStringAsFixed(2)}  ×  Factor: ${d.factor.toStringAsFixed(2)}',
+        ),
+        trailing: Text('\$${d.total.toStringAsFixed(2)}'),
+        onTap: () {
+          // Opcional: abrir un diálogo para editar precio/cant/factor y luego:
+          // ctrl.updateDetalle(index: i, precio: nuevoPrecio, cantidad: nuevaCant, factor: nuevoFactor);
+        },
+      );
+    },
+  ),
+  const SizedBox(height: 20),
+],
+const SizedBox(height: 20),
+
+Row(
+  children: [
+    Expanded(
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ctrl.pago == PaymentType.contado
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
+          foregroundColor: ctrl.pago == PaymentType.contado
+              ? Colors.white
+              : Theme.of(context).colorScheme.primary,
+          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+          elevation: 0,
+        ),
+        onPressed: () => ctrl.setPaymentType(PaymentType.contado),
+        child: const Text('Contado'),
+      ),
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ctrl.pago == PaymentType.credito
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
+          foregroundColor: ctrl.pago == PaymentType.credito
+              ? Colors.white
+              : Theme.of(context).colorScheme.primary,
+          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+          elevation: 0,
+        ),
+        onPressed: () => ctrl.setPaymentType(PaymentType.credito),
+        child: const Text('Crédito'),
+      ),
+    ),
+  ],
+),
+
+const SizedBox(height: 30),
+                  SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: FilledButton(
+      onPressed: () async {
+        // Llama a tu método de validación/guardado en el controller
+        await ctrl.validateAndSave();
+      },
+      style: FilledButton.styleFrom(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      // Aquí renderizamos el texto según esCompra
+      child: Text("GUARDAR ${esCompra ? 'COMPRA' : 'VENTA'}"),
+    ),
+  ),
 
                   // ... aquí irán el resto de campos de la compra/venta (productos, totales, etc.)
                 ],
@@ -154,6 +301,9 @@ class AddBuySellScreen extends StatelessWidget {
         onSelect: (partner) {
           Navigator.pop(context, partner);
         },
+           initialName: esCompra
+            ? ServiceStrings.proveedores
+            : ServiceStrings.clientes, 
       );
     },
   );

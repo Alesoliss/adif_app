@@ -14,11 +14,13 @@ class PartnerController extends ChangeNotifier {
 
   List<PartnerModel> _partners = [];
   bool _loading = false;
-  bool isProveedores = true;
+  bool isProveedores = false;
   List<PartnerModel> get partners => _partners;
   bool get loading => _loading;
 
   Future<void> _init() async {
+    print(name);
+    isProveedores = name == ServiceStrings.proveedores;
     await loadPartners();
   }
 
