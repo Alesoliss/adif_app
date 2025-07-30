@@ -4,7 +4,7 @@ import 'package:edu_app/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class PartnerAddController extends ChangeNotifier {
+class PartnerAddController extends ChangeNotifier { 
   final bool esProveedor;
   final int? id; // ID del socio a editar (null si es nuevo)
   PartnerAddController({this.esProveedor = false,this.id}) {

@@ -20,9 +20,7 @@ class AgregarProductoScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(20), 
-            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
           ),
           leading: Padding(
             padding: const EdgeInsets.only(left: 12),
@@ -124,44 +122,6 @@ class AgregarProductoScreen extends StatelessWidget {
                     ),
                   ),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: TextField(
-                      controller: ctrl.descripcion,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: "Descripción (opcional)",
-                        hintText: "Una breve descripción del producto",
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF8A8A8A),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        hintStyle: const TextStyle(
-                          color: Color(0xFFBDBDBD),
-                          fontSize: 15,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
-                        enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color(0xFFE0E0E0),
-                            width: 1.3,
-                          ),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 1.6,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 30),
                   const Text(
                     "Precios",
@@ -177,7 +137,7 @@ class AgregarProductoScreen extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: TextField(
-                            controller: ctrl.precioVenta,
+                            controller: ctrl.precio,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
@@ -221,7 +181,7 @@ class AgregarProductoScreen extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: TextField(
-                            controller: ctrl.precioCompra,
+                            controller: ctrl.costo,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
@@ -315,47 +275,6 @@ class AgregarProductoScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: TextField(
-                            controller: ctrl.unidad,
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontSize: 16,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: "Unidad",
-                              hintText: "Ej: unidad, kg",
-                              labelStyle: const TextStyle(
-                                color: Color(0xFF8A8A8A),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              hintStyle: const TextStyle(
-                                color: Color(0xFFBDBDBD),
-                                fontSize: 15,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                              ),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Color(0xFFE0E0E0),
-                                  width: 1.3,
-                                ),
-                              ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 1.6,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
 
@@ -371,7 +290,7 @@ class AgregarProductoScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: TextField(
-                      controller: ctrl.categoria,
+                      controller: ctrl.categoriaId,
                       style: const TextStyle(
                         color: Colors.black87,
                         fontSize: 16,
@@ -379,45 +298,6 @@ class AgregarProductoScreen extends StatelessWidget {
                       decoration: InputDecoration(
                         labelText: "Categoría (opcional)",
                         hintText: "Ej: Bebidas",
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF8A8A8A),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        hintStyle: const TextStyle(
-                          color: Color(0xFFBDBDBD),
-                          fontSize: 15,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
-                        enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color(0xFFE0E0E0),
-                            width: 1.3,
-                          ),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 1.6,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: TextField(
-                      controller: ctrl.codigoBarras,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: "Código de barras (opcional)",
-                        hintText: "Escanear o escribir manualmente",
                         labelStyle: const TextStyle(
                           color: Color(0xFF8A8A8A),
                           fontSize: 14,
@@ -507,13 +387,34 @@ class AgregarProductoScreen extends StatelessWidget {
                     ),
                   ),
 
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        "¿Es servicio?",
+                        style: TextStyle(
+                          color: Color(0xFF4F4F4F),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      value: ctrl.activo,
+                      activeColor: Theme.of(context).colorScheme.primary,
+                      onChanged: (v) {
+                        ctrl.activo = v;
+                        ctrl.notifyListeners();
+                      },
+                    ),
+                  ),
+
                   const SizedBox(height: 0),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: FilledButton(
                       onPressed: () async {
-                        await ctrl.saveProducto();
+                        await ctrl.validateAndSave();
                         if (context.mounted) Navigator.pop(context);
                       },
                       style: FilledButton.styleFrom(

@@ -14,7 +14,7 @@ class MainRoutes {
   static const String updateApp = '/updateApp';
   static const String addPartner = "/addPartner";
   static const String addProduct = "/addProduct";
-  static const String addBuySell = "/addVenta";
+  static const String addBuySell = "/addBuySell";
   static const String seleccionarFoto = "/addPhoto";
   static const String home = "/home";
 }

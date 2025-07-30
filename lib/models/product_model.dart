@@ -1,69 +1,55 @@
 class ProductoModel {
-  final String id;
+  final int? id; 
   final String nombre;
-  final String? descripcion;
-  final double precioVenta;
-  final double? precioCompra;
-  final int stock;
-  final String unidad;
-  final String? categoria;
-  final String? codigoBarras;
-  final bool activo;
-  final DateTime fechaRegistro;
+  final double precio;     
+  final double? costo;     
+  final double stock;
+  final int? cateid;        
   final String? notas;
-  final String? fotoUrl;
+  final bool activo;
+  final bool esServicio;
+  final List<int>? img;     
 
   ProductoModel({
-    required this.id,
+    this.id,
     required this.nombre,
-    this.descripcion,
-    required this.precioVenta,
-    this.precioCompra,
+    required this.precio,
+    this.costo,
     required this.stock,
-    required this.unidad,
-    this.categoria,
-    this.codigoBarras,
-    this.activo = true,
-    required this.fechaRegistro,
+    this.cateid,
     this.notas,
-    this.fotoUrl,
+    this.activo = true,
+    this.esServicio = false,
+    this.img,
   });
 
   factory ProductoModel.fromJson(Map<String, dynamic> json) {
     return ProductoModel(
-      id: json['id'] as String,
+      id: json['id'] as int?,
       nombre: json['nombre'] as String,
-      descripcion: json['descripcion'] as String?,
-      precioVenta: (json['precioVenta'] as num).toDouble(),
-      precioCompra: json['precioCompra'] != null
-          ? (json['precioCompra'] as num).toDouble()
-          : null,
-      stock: json['stock'] as int,
-      unidad: json['unidad'] as String,
-      categoria: json['categoria'] as String?,
-      codigoBarras: json['codigoBarras'] as String?,
-      activo: json['activo'] ?? true,
-      fechaRegistro: DateTime.parse(json['fechaRegistro'] as String),
+      precio: (json['precio'] as num).toDouble(),
+      costo: json['costo'] != null ? (json['costo'] as num).toDouble() : null,
+      stock: (json['stock'] as num).toDouble(),
+      cateid: json['cateid'] as int?,
       notas: json['notas'] as String?,
-      fotoUrl: json['fotoUrl'] as String?,
+      activo: (json['activo'] as int) == 1,
+      esServicio: (json['esServicio'] as int) == 1,
+      img: json['img'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id != null) 'id': id,
       'nombre': nombre,
-      'descripcion': descripcion,
-      'precioVenta': precioVenta,
-      'precioCompra': precioCompra,
+      'precio': precio,
+      'costo': costo,
       'stock': stock,
-      'unidad': unidad,
-      'categoria': categoria,
-      'codigoBarras': codigoBarras,
-      'activo': activo,
-      'fechaRegistro': fechaRegistro.toIso8601String(),
+      'cateid': cateid,
       'notas': notas,
-      'fotoUrl': fotoUrl,
+      'activo': activo ? 1 : 0,
+      'esServicio': esServicio ? 1 : 0,
+      'img': img,
     };
   }
 }
