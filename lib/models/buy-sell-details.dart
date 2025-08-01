@@ -1,5 +1,5 @@
 class BuySellDetails {
-  final int compraId;
+  int compraId;
   final int linea;
   int productoId;
    final String productoNombre;
@@ -10,7 +10,7 @@ class BuySellDetails {
   double total;
 
   BuySellDetails({
-    required this.compraId,
+    this.compraId = 0,
     required this.linea,
     required this.productoId,
       required this.productoNombre,
@@ -18,11 +18,11 @@ class BuySellDetails {
     this.precio = 0,
     this.cantidad = 1,
     this.factor = 1,
-  }) : total = precio * cantidad * factor;
+  }) : total = precio * cantidad;
 
   /// Recalcula el total si cambian precio, cantidad o factor
   void recalcular() {
-    total = precio * cantidad * factor;
+    total = precio * cantidad;
   }
 
   Map<String, dynamic> toJson() => {
@@ -47,5 +47,10 @@ class BuySellDetails {
       cantidad: (json['cantidad'] as num).toDouble(),
       factor: (json['factor'] as num).toDouble(),
     )..total = (json['total'] as num).toDouble();
+  }
+  
+}extension ListSum on List<BuySellDetails> {
+  double get sumTotal {
+    return fold(0.0, (prev, elem) => prev + elem.total);
   }
 }
