@@ -1,22 +1,23 @@
+// partner_screen.dart
+
 import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/presentation/partner/list/partner_screen_controller.dart';
 import 'package:edu_app/routes/app_routes.dart';
 import 'package:edu_app/services/partnerService.dart';
-import 'package:edu_app/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
 class PartnerScreen extends StatefulWidget {
-  final void Function(PartnerModel)? onSelect; // Callback para selección
-  final bool isPicker; // Modo selector
+  final void Function(PartnerModel)? onSelect;
+  final bool isPicker;
   final String initialName;
+
   const PartnerScreen({
     Key? key,
     this.onSelect,
-     this.initialName = ServiceStrings.clientes,
-  })  : isPicker = onSelect != null, // Inicializa correctamente
+    this.initialName = "Clientes",
+  })  : isPicker = onSelect != null,
         super(key: key);
 
   @override
@@ -24,94 +25,135 @@ class PartnerScreen extends StatefulWidget {
 }
 
 class _PartnerScreenState extends State<PartnerScreen> {
-  final PartnerService _partnerService = PartnerService();
+  late final PartnerController controller;
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
+  final RxString query = ''.obs;
 
   @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => PartnerController(
-        _partnerService,
-        name: widget.initialName, // ✅ Esto usa el valor correcto
-        
-      ),
-      builder: (context, child) {
-        final ctrl = context.watch<PartnerController>();
-        final filteredPartners = ctrl.partners.where((partner) {
-          return partner.nombre.toLowerCase().contains(_query.toLowerCase()) ||
-              (partner.telefono ?? '').toLowerCase().contains(_query.toLowerCase()) ||
-              (partner.dni ?? '').toLowerCase().contains(_query.toLowerCase());
-        }).toList();
-
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          appBar: _buildAppBar(context),
-          body: Column(
-            children: [
-              _buildSearchBar(context),
-              Expanded(
-                child: ctrl.loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        itemCount: filteredPartners.length,
-                        padding: const EdgeInsets.all(16),
-                        itemBuilder: (context, index) {
-                          final partner = filteredPartners[index];
-                          return _partnerCardWidget(partner, context);
-                        },
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+  void initState() {
+    super.initState();
+    controller = Get.put(
+      PartnerController(PartnerService(), initialName: widget.initialName),
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+  void _showFilterPanel() {
+    showGeneralDialog(
+      context: context,
+      barrierLabel: "Filtro",
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) => Align(
+        alignment: Alignment.centerRight,
+        child: FractionallySizedBox(
+          widthFactor: 0.70,
+          child: Material(
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+            child: _PanelFiltros(controller: controller),
+          ),
+        ),
       ),
-      centerTitle: true,
-      title: Consumer<PartnerController>(
-        builder: (context, controller, _) {
-          return Text(
-            controller.isProveedores ? "Proveedores" : "Clientes",
-            style: const TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w600,
-              fontSize: 17,
-            ),
-          );
-        },
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: Column(
+        children: [
+          _buildSearchBar(),
+          Expanded(
+            child: Obx(() {
+              // ✅ Estas son Rx dentro del Obx:
+              if (controller.loading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final filtro = query.value.toLowerCase();
+              final listaFiltrada = controller.socios.where((p) {
+                final matchSearch = p.nombre.toLowerCase().contains(filtro) ||
+                    (p.notas ?? '').toLowerCase().contains(filtro) ||
+                    (p.dni ?? '').toLowerCase().contains(filtro);
+
+                final matchTipo = switch (controller.tipoFiltro.value) {
+                  SocioTipo.clientes   => !p.esProveedor,
+                  SocioTipo.proveedores => p.esProveedor,
+                  SocioTipo.todos       => true,
+                };
+                return matchSearch && matchTipo;
+              }).toList();
+
+              if (listaFiltrada.isEmpty) {
+                return const Center(child: Text("No hay resultados"));
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: listaFiltrada.length,
+                itemBuilder: (_, i) => _partnerCard(listaFiltrada[i]),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: Obx(() {
+        // isProveedores es RxBool
+        return Text(
+          controller.isProveedores.value ? "Proveedores" : "Clientes",
+          style: const TextStyle(color: Colors.black87),
+        );
+      }),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+        onPressed: () => Get.back(),
       ),
       actions: [
+        if (!widget.isPicker)
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.black87),
+            onPressed: () async {
+              final result = await Get.toNamed(MainRoutes.addPartner);
+              if (result == true) {
+                controller.loadPartners();
+              }
+            },
+          ),
         if (widget.isPicker)
           IconButton(
             icon: const Icon(Icons.close, color: Colors.black87),
             onPressed: () => Navigator.pop(context),
           ),
       ],
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
     );
   }
 
-  /// Barra de búsqueda
-  Widget _buildSearchBar(BuildContext context) {
+  Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Expanded(
             child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(14),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Row(
                 children: [
                   const Icon(Icons.search, color: Colors.grey),
@@ -123,121 +165,114 @@ class _PartnerScreenState extends State<PartnerScreen> {
                         hintText: 'Buscar...',
                         border: InputBorder.none,
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _query = value;
-                        });
-                      },
+                      onChanged: (v) => query.value = v,
                     ),
                   ),
-                ],
+                ],  
               ),
             ),
           ),
           const SizedBox(width: 8),
-          Consumer<PartnerController>(
-            builder: (context, controller, child) {
-              return Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: IconButton(
-                  icon: Text(
-                    controller.isProveedores ? "P" : "C",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                 onPressed: widget.isPicker
-                  ? null // ❌ deshabilita el botón en modo selección
-                  : () {
-                      controller.togglePartnerType(); // ✅ solo cambia si no esPicker
-                    },
-                ),
-              );
-            },
+          IconButton(
+            icon: const Icon(Icons.tune, color: Colors.white),
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: _showFilterPanel,
           ),
         ],
       ),
     );
   }
 
-  /// Tarjeta de socio
-  Widget _partnerCardWidget(PartnerModel partner, BuildContext context) {
+  Widget _partnerCard(PartnerModel p) {
     final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () {
-        if (widget.isPicker) {
-          // Devolver el socio seleccionado
-          Navigator.pop(context, partner);
-        } else {
-          // Abrir la pantalla de edición
-          Get.toNamed(MainRoutes.addPartner, arguments: {
-            'id': partner.id,
-            'esProveedor': partner.esProveedor,
-          });
-        }
-      },
-      child: Card(
-        color: Colors.white,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListTile(
+        onTap: () {
+          if (widget.isPicker) {
+            Navigator.pop(context, p);
+          } else {
+            Get.toNamed(MainRoutes.addPartner, arguments: {
+              'id': p.id,
+              'esProveedor': p.esProveedor,
+            });
+          }
+        },
+        leading: CircleAvatar(child: const Icon(Icons.person)),
+        title: Text(p.nombre, style: theme.textTheme.titleMedium),
+        subtitle: Text(
+          [
+            if ((p.telefono ?? '').isNotEmpty) 'Tel: ${p.telefono}',
+            if ((p.dni      ?? '').isNotEmpty) 'DNI: ${p.dni}',
+            if ((p.notas    ?? '').isNotEmpty) p.notas!,
+          ].join(' • '),
+        ),
+        trailing: const Icon(FontAwesomeIcons.whatsapp, color: Colors.green),
+      ),
+    );
+  }
+}
+
+// Panel de filtros
+class _PanelFiltros extends StatelessWidget {
+  final PartnerController controller;
+  const _PanelFiltros({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                const Text("Filtros", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    controller.aplicarFiltros(SocioTipo.todos);
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Limpiar"),
                 ),
-                child: const Icon(Icons.person, size: 34),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      partner.nombre,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+              ],
+            ),
+            const SizedBox(height: 10),
+            Obx(() {
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: SocioTipo.values.map((tipo) {
+                  final sel = controller.tipoFiltro.value == tipo;
+                  return GestureDetector(
+                    onTap: () => controller.aplicarFiltros(tipo),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: sel ? primary : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Text(
+                        tipo.name.capitalizeFirst!,
+                        style: TextStyle(color: sel ? Colors.white : Colors.black87),
                       ),
                     ),
-                    if (partner.telefono?.isNotEmpty ?? false)
-                      Text(
-                        'Tel: ${partner.telefono!} DNI: ${partner.dni ?? ''}',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: Colors.grey.shade700),
-                      ),
-                    if (partner.notas?.isNotEmpty ?? false)
-                      Text(
-                        partner.notas!,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: Colors.grey.shade500),
-                      ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: null,
-                icon: const Icon(
-                  FontAwesomeIcons.whatsapp,
-                  color: Colors.green,
-                  size: 28,
-                ),
-              ),
-            ],
-          ),
+                  );
+                }).toList(),
+              );
+            }),
+            const Spacer(),
+          ],
         ),
       ),
     );

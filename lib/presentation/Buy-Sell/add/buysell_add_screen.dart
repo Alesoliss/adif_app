@@ -474,7 +474,9 @@ class _DetalleCard extends StatelessWidget {
                         border: UnderlineInputBorder()),
                     controller: TextEditingController(
                         text: d.precio.toStringAsFixed(2)),
-     
+                                                               inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
                     onChanged: (v) => onUpdate(
                         index: index,
                         precio: double.tryParse(v) ?? 0),
@@ -554,6 +556,9 @@ class _DetalleCard extends StatelessWidget {
                       ),
                       controller: TextEditingController(
                           text: d.factor.toStringAsFixed(2)),
+                                                                                    inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
                       onChanged: (v) => onUpdate(
                           index: index,
                           factor: double.tryParse(v) ?? 1),
