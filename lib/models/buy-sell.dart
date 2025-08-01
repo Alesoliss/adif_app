@@ -79,6 +79,7 @@ class BuySellDetalleModel {
   final double costo;
   final double precio;
   final double cantidad;
+  final double factor;
   final double total;
 
   BuySellDetalleModel({
@@ -88,6 +89,7 @@ class BuySellDetalleModel {
     required this.costo,
     required this.precio,
     required this.cantidad,
+    required this.factor,
     required this.total,
   });
 
@@ -99,6 +101,7 @@ class BuySellDetalleModel {
       costo: (json['costo'] as num).toDouble(),
       precio: (json['precio'] as num).toDouble(),
       cantidad: (json['cantidad'] as num).toDouble(),
+      factor: (json['factor'] as num).toDouble(),
       total: (json['total'] as num).toDouble(),
     );
   }
@@ -111,6 +114,7 @@ class BuySellDetalleModel {
       'costo': costo,
       'precio': precio,
       'cantidad': cantidad,
+      'factor': factor,
       'total': total,
     };
   }

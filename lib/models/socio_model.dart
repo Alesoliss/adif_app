@@ -20,6 +20,7 @@ class PartnerModel {
       id: json['id'] as int?,
       nombre: json['nombre'] as String,
       dni: json['dni'] as String?,
+      
       telefono: json['telefono'] as String?,
       notas: json['notas'] as String?,
       esProveedor: (json['esProveedor'] ?? 0) == 1,
@@ -31,9 +32,10 @@ class PartnerModel {
     return {
       'id': id,
       'nombre': nombre,
-      'dni': dni,
-      'telefono': telefono,
-      'notas': notas,
+      'dni': dni ?? "",
+      
+      'telefono': telefono ?? "",
+      'notas': notas ?? "",
       'esProveedor': esProveedor ? 1 : 0,
     };
   }

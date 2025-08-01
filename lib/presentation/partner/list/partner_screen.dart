@@ -11,10 +11,11 @@ import 'package:provider/provider.dart';
 class PartnerScreen extends StatefulWidget {
   final void Function(PartnerModel)? onSelect; // Callback para selección
   final bool isPicker; // Modo selector
-
+  final String initialName;
   const PartnerScreen({
     Key? key,
     this.onSelect,
+     this.initialName = ServiceStrings.clientes,
   })  : isPicker = onSelect != null, // Inicializa correctamente
         super(key: key);
 
@@ -32,7 +33,8 @@ class _PartnerScreenState extends State<PartnerScreen> {
     return ChangeNotifierProvider(
       create: (_) => PartnerController(
         _partnerService,
-        name: ServiceStrings.clientes,
+        name: widget.initialName, // ✅ Esto usa el valor correcto
+        
       ),
       builder: (context, child) {
         final ctrl = context.watch<PartnerController>();
@@ -151,9 +153,11 @@ class _PartnerScreenState extends State<PartnerScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onPressed: () {
-                    controller.togglePartnerType();
-                  },
+                 onPressed: widget.isPicker
+                  ? null // ❌ deshabilita el botón en modo selección
+                  : () {
+                      controller.togglePartnerType(); // ✅ solo cambia si no esPicker
+                    },
                 ),
               );
             },

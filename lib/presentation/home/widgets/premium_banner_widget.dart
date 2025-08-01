@@ -80,8 +80,7 @@ class PremiumBannerWidget extends StatelessWidget {
               height: 90,
               width: 90,
               fit: BoxFit.contain,
-              errorBuilder: (_, _, _) =>
-                  const Icon(Icons.emoji_events, size: 50, color: Colors.amber),
+
             ),
           ),
         ],

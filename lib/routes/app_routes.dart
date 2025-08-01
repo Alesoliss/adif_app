@@ -26,7 +26,13 @@ class MainPages {
     GetPage(name: MainRoutes.main, page: () => MainScreen()),
     GetPage(name: MainRoutes.home, page: () => HomeScreen()),
     GetPage(name: MainRoutes.addPartner, page: () => AddPartnerScreen()),
-    GetPage(name: MainRoutes.addBuySell, page: () => AddBuySellScreen()),
+    GetPage(name: MainRoutes.addBuySell, page: () {
+        final args = Get.arguments as Map<String, dynamic>? ?? {};
+        return AddBuySellScreen(
+          esCompra: args['esCompra'] as bool? ?? false,
+          id: args['id'] as int?,
+        );
+      },),
     GetPage(name: MainRoutes.addProduct, page: () => AgregarProductoScreen()),
     GetPage(name: MainRoutes.seleccionarFoto, page: () => AddPhotoScreen()),
 

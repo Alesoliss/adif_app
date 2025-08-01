@@ -1,0 +1,115 @@
+import 'package:edu_app/models/buy-sell.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:edu_app/services/services.dart';
+
+class BuySellService {
+  /// Inserta una compra y sus detalles, y ajusta stock/costo
+  static Future<void> saveCompra(BuySell compra) async {
+    final db = await DatabaseHelper.initDB();
+
+    // 1) Inserto la cabecera en tabla "compras"
+    final compraId = await db.insert(ServiceStrings.compras, {
+      'sociosId': compra.sociosId,
+      'fecha': compra.fecha,
+      'fechaVence': compra.fechaVence,
+      'total': compra.total,
+      'esCredito': compra.esCredito ? 1 : 0,
+      'saldo': compra.esCredito ? compra.total : 0, // en compra, saldo = total
+      'comentario': compra.comentario,
+      'estado': 1,
+      
+    });
+
+    // 2) Inserto cada línea en "compras_detalles" y actualizo producto
+    for (final det in compra.detalles) {
+      await db.insert(ServiceStrings.comprasDetalles, {
+        'compraId': compraId,
+        'linea': det.linea,
+        'productoId': det.productoId,
+        'costo': det.costo,
+        'factor': det.factor,
+        'precio': det.precio,     // si lo necesitas
+        'cantidad': det.cantidad,
+        'total': det.total,
+      });
+
+      // 3) Ajusto stock y costo en productos
+      final prod = (await db.query(
+        ServiceStrings.productos,
+        columns: ['stock', 'costo'],
+        where: 'id = ?',
+        whereArgs: [det.productoId],
+      )).first;
+
+      final oldStock = prod['stock'] as num;
+      final oldCosto = prod['costo'] as num;
+
+      final newStock = oldStock + (det.cantidad * det.factor);
+      // nuevo costo medio ponderado
+      final newCosto = ((oldCosto * oldStock) + (det.costo * det.cantidad)) /
+          newStock;
+
+      await db.update(
+        ServiceStrings.productos,
+        {
+          'stock': newStock,
+          'costo': newCosto,
+        },
+        where: 'id = ?',
+        whereArgs: [det.productoId],
+      );
+    }
+  }
+
+  /// Inserta una venta y sus detalles, y ajusta stock/precio
+  static Future<void> saveVenta(BuySell venta) async {
+    final db = await DatabaseHelper.initDB();
+
+    // 1) Inserto la cabecera en tabla "ventas"
+    final ventaId = await db.insert(ServiceStrings.ventas, {
+      'sociosId': venta.sociosId,
+      'fecha': venta.fecha,
+      'fechaVence': venta.fechaVence,
+      'total': venta.total,
+      'esCredito': venta.esCredito ? 1 : 0,
+      'saldo': venta.esCredito ? venta.total : 0.0,
+      'comentario': venta.comentario,
+       'estado': 1,
+    });
+
+    // 2) Inserto los detalles y actualizo producto
+    for (final det in venta.detalles) {
+      await db.insert(ServiceStrings.ventasDetalles, {
+        'ventaId': ventaId,
+        'linea': det.linea,
+        'productoId': det.productoId,
+        'costo': det.costo,
+        'precio': det.precio,
+        'factor': det.factor,
+        'cantidad': det.cantidad,
+        'total': det.total,
+      });
+
+      // 3) Ajusto stock y precio en productos
+      final prod = (await db.query(
+        ServiceStrings.productos,
+        columns: ['stock', 'precio'],
+        where: 'id = ?',
+        whereArgs: [det.productoId],
+      )).first;
+
+      final oldStock = prod['stock'] as num;
+      final newStock = oldStock - (det.cantidad * det.factor);
+
+      await db.update(
+        ServiceStrings.productos,
+        {
+          'stock': newStock < 0 ? 0 : newStock,
+          'precio': det.precio, // asumimos que el último precio de venta es el precio actual
+        },
+        where: 'id = ?',
+        whereArgs: [det.productoId],
+      );
+    }
+  }
+}
