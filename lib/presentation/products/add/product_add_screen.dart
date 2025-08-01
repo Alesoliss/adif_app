@@ -1,4 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:edu_app/models/category_model.dart';
+import 'package:edu_app/shared_components/helpers/ok_cancel_dialog.dart';
+import 'package:edu_app/shared_components/helpers/snackbar_helper.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +14,10 @@ class AgregarProductoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+    final id = args['id'] as int?;
     return ChangeNotifierProvider(
-      create: (_) => ProductoAddController(),
+      create: (_) => ProductoAddController(id: id),
       child: Scaffold(
         appBar: AppBar(
           // backgroundColor: Theme.of(
@@ -36,14 +42,15 @@ class AgregarProductoScreen extends StatelessWidget {
             ),
           ),
           centerTitle: true,
-          title: const Text(
-            "Agregar producto",
-            style: TextStyle(
+          title: Text(
+            id == null ? "Agregar producto" : "Editar producto",
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.w600,
               fontSize: 17,
             ),
           ),
+
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -310,40 +317,112 @@ class AgregarProductoScreen extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: TextField(
-                      controller: ctrl.categoriaId,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: "Categoría (opcional)",
-                        hintText: "Ej: Bebidas",
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF8A8A8A),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Autocomplete<CategoriaModel>(
+                          displayStringForOption: (cat) => cat.nombre,
+                          optionsBuilder: (TextEditingValue value) async {
+                            await ctrl.cargarCategorias(value.text);
+                            return ctrl.sugerenciasCategorias;
+                          },
+                          fieldViewBuilder:
+                              (
+                                context,
+                                textEditingController,
+                                focusNode,
+                                onFieldSubmitted,
+                              ) {
+                                ctrl.categoriaNombre.text =
+                                    textEditingController.text;
+
+                                return Stack(
+                                  alignment: Alignment.centerRight,
+                                  children: [
+                                    TextField(
+                                      controller: textEditingController,
+                                      focusNode: focusNode,
+                                      onChanged: (value) {
+                                        ctrl.categoriaNombre.text = value;
+                                        ctrl.cargarCategorias(value);
+                                      },
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 16,
+                                      ),
+                                      decoration: InputDecoration(
+                                        labelText: "Categoría (opcional)",
+                                        hintText: "Ej: Bebidas",
+                                        labelStyle: const TextStyle(
+                                          color: Color(0xFF8A8A8A),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        hintStyle: const TextStyle(
+                                          color: Color(0xFFBDBDBD),
+                                          fontSize: 15,
+                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                        enabledBorder:
+                                            const UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                color: Color(0xFFE0E0E0),
+                                                width: 1.3,
+                                              ),
+                                            ),
+                                        focusedBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                            width: 1.6,
+                                          ),
+                                        ),
+                                        errorText:
+                                            textEditingController.text
+                                                .trim()
+                                                .isEmpty
+                                            ? null
+                                            : (ctrl.categoriaNoExiste
+                                                  ? 'La categoría no existe'
+                                                  : null),
+                                      ),
+                                    ),
+                                    if (textEditingController.text.isNotEmpty)
+                                      IconButton(
+                                        icon: const Icon(Icons.close, size: 20),
+                                        onPressed: () {
+                                          textEditingController.clear();
+                                          ctrl.categoriaNombre.clear();
+                                          ctrl.categoriaId.clear();
+                                          ctrl.categoriaNoExiste = false;
+                                          ctrl.notifyListeners();
+                                        },
+                                      ),
+                                  ],
+                                );
+                              },
+                          onSelected: (cat) {
+                            ctrl.categoriaId.text = cat.id.toString();
+                            ctrl.categoriaNombre.text = cat.nombre;
+                            ctrl.categoriaNoExiste = false;
+                            ctrl.notifyListeners();
+                          },
                         ),
-                        hintStyle: const TextStyle(
-                          color: Color(0xFFBDBDBD),
-                          fontSize: 15,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
-                        enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color(0xFFE0E0E0),
-                            width: 1.3,
+                        if (ctrl.categoriaNombre.text.trim().isNotEmpty &&
+                            ctrl.categoriaNoExiste)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: TextButton.icon(
+                              onPressed: () => ctrl.crearCategoriaSiNoExiste(),
+                              icon: const Icon(Icons.add),
+                              label: const Text("Crear nueva categoría"),
+                            ),
                           ),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 1.6,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
                   ),
 
@@ -400,7 +479,12 @@ class AgregarProductoScreen extends StatelessWidget {
                         ),
                       ),
                       value: ctrl.activo,
-                      activeColor: Theme.of(context).colorScheme.primary,
+                      activeColor: Colors.white, // Color del círculo
+                      activeTrackColor: Theme.of(
+                        context,
+                      ).colorScheme.primary, // fondo azul
+                      inactiveThumbColor: Colors.white,
+                      inactiveTrackColor: Colors.grey.shade400,
                       onChanged: (v) {
                         ctrl.activo = v;
                         ctrl.notifyListeners();
@@ -420,10 +504,15 @@ class AgregarProductoScreen extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      value: ctrl.activo,
-                      activeColor: Theme.of(context).colorScheme.primary,
+                      value: ctrl.esServicio,
+                      activeColor: Colors.white, // círculo
+                      activeTrackColor: Theme.of(
+                        context,
+                      ).colorScheme.primary, // fondo
+                      inactiveThumbColor: Colors.white,
+                      inactiveTrackColor: Colors.grey.shade400,
                       onChanged: (v) {
-                        ctrl.activo = v;
+                        ctrl.esServicio = v;
                         ctrl.notifyListeners();
                       },
                     ),
@@ -435,13 +524,35 @@ class AgregarProductoScreen extends StatelessWidget {
                     height: 50,
                     child: FilledButton(
                       onPressed: () async {
+                        if (ctrl.id != null) {
+                          final confirmar = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => const OkCancelDialog(
+                              title: 'Confirmar edición',
+                              message:
+                                  '¿Deseas guardar los cambios realizados?',
+                              icon: Icons.edit_note_rounded,
+                              okString: 'Guardar',
+                              cancelString: 'Cancelar',
+                            ),
+                          );
+
+                          if (confirmar != true) return;
+                        }
+
                         await ctrl.validateAndSave();
-                        // Solo salir si todo es válido
+
                         if (!ctrl.nombreInvalido &&
                             !ctrl.precioInvalido &&
                             !ctrl.stockInvalido &&
                             context.mounted) {
-                          Navigator.pop(context);
+                          SnackbarHelper.show(
+                            type: SnackType.success,
+                            message: ctrl.id == null
+                                ? 'Producto guardado correctamente'
+                                : 'Cambios guardados con éxito',
+                          );
+                          Navigator.pop(context, true);
                         }
                       },
 
@@ -488,8 +599,10 @@ class AgregarProductoScreen extends StatelessWidget {
           ).colorScheme.primary.withOpacity(0.18),
           backgroundImage: ctrl.fotoPath != null
               ? FileImage(File(ctrl.fotoPath!))
-              : null,
-          child: ctrl.fotoPath == null
+              : (ctrl.imgBytes != null
+                    ? MemoryImage(Uint8List.fromList(ctrl.imgBytes!))
+                    : null),
+          child: (ctrl.fotoPath == null && ctrl.imgBytes == null)
               ? Icon(
                   Icons.camera_alt_rounded,
                   color: Theme.of(context).colorScheme.primary,

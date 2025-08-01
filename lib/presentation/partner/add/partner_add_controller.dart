@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
 class PartnerAddController extends ChangeNotifier { 
   final bool esProveedor;

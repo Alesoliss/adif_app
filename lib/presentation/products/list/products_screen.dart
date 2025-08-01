@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:edu_app/models/product_model.dart';
 import 'package:edu_app/presentation/products/list/products_controller.dart';
+import 'package:edu_app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,6 +11,42 @@ class ProductsScreen extends StatelessWidget {
   final controller = Get.put(ProductsController());
   final TextEditingController searchController = TextEditingController();
   final RxString query = ''.obs;
+
+  //abre filtro
+  void showRightFilterPanel(
+    BuildContext context,
+    ProductsController controller,
+  ) {
+    showGeneralDialog(
+      context: context,
+      barrierLabel: "Filtro",
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, _, _) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: FractionallySizedBox(
+            widthFactor: 0.70,
+            child: Material(
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(20),
+              ),
+              color: Colors.white,
+              child: _PanelFiltros(controller: controller),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (_, animation, _, child) {
+        final offsetAnimation =
+            Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
+        return SlideTransition(position: offsetAnimation, child: child);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +91,10 @@ class ProductsScreen extends StatelessWidget {
                 elevation: 1,
               ),
               onPressed: () async {
-                await Get.toNamed('/producto/agregar');
-                controller.loadProductos(); // 👈 recarga al volver
+                final result = await Get.toNamed(MainRoutes.addProduct);
+                if (result == true) {
+                  await controller.loadProductos();
+                }
               },
             ),
           ),
@@ -74,10 +113,27 @@ class ProductsScreen extends StatelessWidget {
                 final coincideBusqueda =
                     producto.nombre.toLowerCase().contains(filtro) ||
                     (producto.notas ?? '').toLowerCase().contains(filtro);
-                final coincideTipo = controller.mostrarServicios.value
-                    ? producto.esServicio
-                    : !producto.esServicio;
-                return coincideBusqueda && coincideTipo;
+                final coincideTipo = switch (controller.tipoFiltro.value) {
+                  ProductoTipo.todos => true,
+                  ProductoTipo.productos => !producto.esServicio,
+                  ProductoTipo.servicios => producto.esServicio,
+                };
+
+                final coincideEstado = switch (controller.estadoFiltro.value) {
+                  ProductoEstado.todos => true,
+                  ProductoEstado.activos => producto.activo,
+                  ProductoEstado.inactivos => !producto.activo,
+                };
+
+                final coincidePrecio =
+                    producto.precio >=
+                        controller.rangoPrecioFiltro.value.start &&
+                    producto.precio <= controller.rangoPrecioFiltro.value.end;
+
+                return coincideBusqueda &&
+                    coincideTipo &&
+                    coincideEstado &&
+                    coincidePrecio;
               }).toList();
 
               if (productosFiltrados.isEmpty) {
@@ -129,30 +185,21 @@ class ProductsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Obx(() {
-            return Container(
-              height: 48,
-              width: 48,
-              decoration: BoxDecoration(
-                color: Theme.of(Get.context!).colorScheme.primary,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: IconButton(
-                icon: Text(
-                  controller.mostrarServicios.value ? "S" : "P",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+          SizedBox(
+            height: 48,
+            width: 48,
+            child: IconButton(
+              icon: const Icon(Icons.tune, color: Colors.white),
+              style: IconButton.styleFrom(
+                backgroundColor: Theme.of(Get.context!).colorScheme.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                onPressed: () {
-                  controller.mostrarServicios.value =
-                      !controller.mostrarServicios.value;
-                },
+                elevation: 1,
               ),
-            );
-          }),
+              onPressed: () => showRightFilterPanel(Get.context!, controller),
+            ),
+          ),
         ],
       ),
     );
@@ -161,63 +208,299 @@ class ProductsScreen extends StatelessWidget {
   Widget _cardProductWidget(ProductoModel producto, BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: theme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                image: producto.img != null && producto.img!.isNotEmpty
-                    ? DecorationImage(
-                        image: MemoryImage(Uint8List.fromList(producto.img!)),
-                        fit: BoxFit.cover,
-                      )
+    return GestureDetector(
+      onTap: () async {
+        final result = await Get.toNamed(
+          MainRoutes.addProduct,
+          arguments: {'id': producto.id}, // 👈 Envías el id del producto
+        );
+        if (result == true) {
+          await controller.loadProductos(); // 👈 Recarga la lista
+        }
+      },
+      child: Card(
+        color: Colors.white,
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  image: producto.img != null && producto.img!.isNotEmpty
+                      ? DecorationImage(
+                          image: MemoryImage(Uint8List.fromList(producto.img!)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: producto.img == null || producto.img!.isEmpty
+                    ? const Icon(Icons.inventory_2_outlined, size: 34)
                     : null,
               ),
-              child: producto.img == null || producto.img!.isEmpty
-                  ? const Icon(Icons.inventory_2_outlined, size: 34)
-                  : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    producto.nombre,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Precio: L. ${producto.precio.toStringAsFixed(2)}',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  Text(
-                    'Stock: ${producto.stock}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  if (producto.notas?.isNotEmpty ?? false)
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      producto.notas!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade500,
+                      producto.nombre,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
                       ),
                     ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Precio: L. ${producto.precio.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    Text(
+                      'Stock: ${producto.stock}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    if (producto.notas?.isNotEmpty ?? false)
+                      Text(
+                        producto.notas!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FiltroChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _FiltroChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? color : Colors.grey[200],
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PanelFiltros extends StatelessWidget {
+  final ProductsController controller;
+
+  const _PanelFiltros({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 0, left: 20, right: 20, bottom: 16),
+        child: Column(
+          children: [
+            // Header
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const Text(
+                  "Filtros",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    controller.aplicarFiltros(
+                      ProductoTipo.todos,
+                      ProductoEstado.todos,
+                      precioMax: 1000,
+                      categoria: '',
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    "Limpiar",
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Tipo de producto",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 12),
+                    Obx(
+                      () => Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: ProductoTipo.values.map((tipo) {
+                          final selected = controller.tipoFiltro.value == tipo;
+                          return _FiltroChip(
+                            label: tipo.name.capitalizeFirst!,
+                            selected: selected,
+                            onTap: () => controller.tipoFiltro.value = tipo,
+                            color: primary,
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                    const Text("Estado", style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 12),
+                    Obx(
+                      () => Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: ProductoEstado.values.map((estado) {
+                          final label = switch (estado) {
+                            ProductoEstado.todos => 'Todos',
+                            ProductoEstado.activos => 'Activos',
+                            ProductoEstado.inactivos => 'Inactivos',
+                          };
+                          final selected =
+                              controller.estadoFiltro.value == estado;
+                          return _FiltroChip(
+                            label: label,
+                            selected: selected,
+                            onTap: () => controller.estadoFiltro.value = estado,
+                            color: primary,
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Rango de precios",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    Obx(
+                      () => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          RangeSlider(
+                            values: controller.rangoPrecioFiltro.value,
+                            min: 0,
+                            max: 1000,
+                            divisions: 20,
+                            labels: RangeLabels(
+                              "L. ${controller.rangoPrecioFiltro.value.start.toStringAsFixed(0)}",
+                              "L. ${controller.rangoPrecioFiltro.value.end.toStringAsFixed(0)}",
+                            ),
+                            onChanged: (RangeValues values) {
+                              controller.rangoPrecioFiltro.value = values;
+                            },
+                            activeColor: primary,
+                          ),
+                          Text(
+                            "Desde L. ${controller.rangoPrecioFiltro.value.start.toStringAsFixed(0)} "
+                            "hasta L. ${controller.rangoPrecioFiltro.value.end.toStringAsFixed(0)}",
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Categorías",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 12),
+                    Obx(() {
+                      if (controller.sugerenciasCategorias.isEmpty) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        ); // o SizedBox.shrink()
+                      }
+
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: controller.sugerenciasCategorias.map((cat) {
+                          final selected =
+                              controller.categoriaFiltro.value == cat.nombre;
+                          return _FiltroChip(
+                            label: cat.nombre,
+                            selected: selected,
+                            onTap: () =>
+                                controller.categoriaFiltro.value = cat.nombre,
+                            color: primary,
+                          );
+                        }).toList(),
+                      );
+                    }),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+
+            // Botón aplicar
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                onPressed: () => Navigator.pop(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text("Aplicar filtros"),
               ),
             ),
           ],

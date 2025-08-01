@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'package:edu_app/models/category_model.dart';
 import 'package:edu_app/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:edu_app/services/services.dart';
 import 'package:image/image.dart' as img;
 
 class ProductoAddController extends ChangeNotifier {
-  final int? id; // ID del producto (null si es nuevo)
+  final int? id;
 
   ProductoAddController({this.id}) {
     if (id != null) _loadProducto(id!);
@@ -17,8 +18,7 @@ class ProductoAddController extends ChangeNotifier {
   final TextEditingController costo = TextEditingController();
   final TextEditingController stock = TextEditingController();
   final TextEditingController notas = TextEditingController();
-  final TextEditingController categoriaId =
-      TextEditingController(); // como ID opcional
+  final TextEditingController categoriaId = TextEditingController();
 
   bool activo = true;
   bool esServicio = false;
@@ -29,6 +29,11 @@ class ProductoAddController extends ChangeNotifier {
   bool nombreInvalido = false;
   bool precioInvalido = false;
   bool stockInvalido = false;
+
+  //para categoria
+  final TextEditingController categoriaNombre = TextEditingController();
+  bool categoriaNoExiste = false;
+  List<CategoriaModel> sugerenciasCategorias = [];
 
   // ----------- Cargar producto si es edición -----------
   Future<void> _loadProducto(int id) async {
@@ -51,6 +56,20 @@ class ProductoAddController extends ChangeNotifier {
         activo = producto.activo;
         esServicio = producto.esServicio;
         imgBytes = producto.img;
+        if (producto.cateid != null) {
+          final db = await DatabaseHelper.initDB();
+          final catResult = await db.query(
+            ServiceStrings.categorias,
+            where: 'id = ?',
+            whereArgs: [producto.cateid],
+            limit: 1,
+          );
+          if (catResult.isNotEmpty) {
+            categoriaNombre.text = CategoriaModel.fromJson(
+              catResult.first,
+            ).nombre;
+          }
+        }
         notifyListeners();
       }
     } catch (e) {
@@ -82,6 +101,7 @@ class ProductoAddController extends ChangeNotifier {
         cateid: categoriaId.text.trim().isEmpty
             ? null
             : int.tryParse(categoriaId.text),
+
         notas: notas.text.trim().isEmpty ? null : notas.text.trim(),
         activo: activo,
         esServicio: esServicio,
@@ -115,13 +135,11 @@ class ProductoAddController extends ChangeNotifier {
       final file = File(path);
       final bytes = await file.readAsBytes();
 
-      // Decodifica la imagen
       final originalImage = img.decodeImage(bytes);
       if (originalImage == null) {
         throw Exception("No se pudo decodificar la imagen");
       }
 
-      // Redimensionar si es necesario
       img.Image resized = originalImage;
       if (originalImage.width > 720) {
         final newHeight = (720 * originalImage.height / originalImage.width)
@@ -129,12 +147,50 @@ class ProductoAddController extends ChangeNotifier {
         resized = img.copyResize(originalImage, width: 720, height: newHeight);
       }
 
-      // Codificar nuevamente a PNG
       imgBytes = img.encodePng(resized);
 
       notifyListeners();
     } catch (e) {
       debugPrint("❌ Error al procesar imagen: $e");
+    }
+  }
+
+  //para categorias
+
+  Future<void> cargarCategorias(String input) async {
+    final lista = await DatabaseHelper.getAll(ServiceStrings.categorias);
+    final categorias = lista.map((e) => CategoriaModel.fromJson(e)).toList();
+
+    final filtro = input.trim().toLowerCase();
+    sugerenciasCategorias = categorias
+        .where((cat) => cat.nombre.toLowerCase().contains(filtro))
+        .toList();
+
+    final existe = categorias.any((cat) => cat.nombre.toLowerCase() == filtro);
+    categoriaNoExiste = !existe;
+    notifyListeners();
+  }
+
+  Future<void> crearCategoriaSiNoExiste() async {
+    final nombre = categoriaNombre.text.trim();
+    if (nombre.isEmpty) return;
+
+    final lista = await DatabaseHelper.getAll(ServiceStrings.categorias);
+    final categorias = lista.map((e) => CategoriaModel.fromJson(e)).toList();
+    final existe = categorias.firstWhere(
+      (cat) => cat.nombre.toLowerCase() == nombre.toLowerCase(),
+      orElse: () => CategoriaModel(id: null, nombre: ''),
+    );
+
+    if (existe.id == null) {
+      final nuevaCategoria = CategoriaModel(nombre: nombre);
+      final id = await DatabaseHelper.insert(
+        ServiceStrings.categorias,
+        nuevaCategoria.toJson(),
+      );
+      categoriaId.text = id.toString();
+      categoriaNoExiste = false;
+      notifyListeners();
     }
   }
 
