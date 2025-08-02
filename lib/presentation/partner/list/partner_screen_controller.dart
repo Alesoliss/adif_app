@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 enum SocioTipo { todos, clientes, proveedores }
 
 class PartnerController extends GetxController {
+  
   final PartnerService _service;
 
   // todo en Rx

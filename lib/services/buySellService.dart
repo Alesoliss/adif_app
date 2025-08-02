@@ -42,18 +42,14 @@ class BuySellService {
       )).first;
 
       final oldStock = prod['stock'] as num;
-      final oldCosto = prod['costo'] as num;
 
       final newStock = oldStock + (det.cantidad * det.factor);
-      // nuevo costo medio ponderado
-      final newCosto = ((oldCosto * oldStock) + (det.costo * det.cantidad)) /
-          newStock;
 
       await db.update(
         ServiceStrings.productos,
         {
           'stock': newStock,
-          'costo': newCosto,
+          'costo': det.costo,
         },
         where: 'id = ?',
         whereArgs: [det.productoId],

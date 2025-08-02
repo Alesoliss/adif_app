@@ -1,4 +1,5 @@
 import 'package:edu_app/main/main_screen.dart';
+import 'package:edu_app/presentation/Buy-Sell/add/buysell_add_controller.dart';
 import 'package:edu_app/presentation/Buy-Sell/add/buysell_add_screen.dart';
 import 'package:edu_app/presentation/home/home_screen.dart';
 import 'package:edu_app/presentation/partner/add/partner_add_screen.dart';
@@ -26,13 +27,10 @@ class MainPages {
     GetPage(name: MainRoutes.main, page: () => MainScreen()),
     GetPage(name: MainRoutes.home, page: () => HomeScreen()),
     GetPage(name: MainRoutes.addPartner, page: () => AddPartnerScreen()),
-    GetPage(name: MainRoutes.addBuySell, page: () {
-        final args = Get.arguments as Map<String, dynamic>? ?? {};
-        return AddBuySellScreen(
-          esCompra: args['esCompra'] as bool? ?? false,
-          id: args['id'] as int?,
-        );
-      },),
+    GetPage(
+      name: MainRoutes.addBuySell,
+      page: () => const AddBuySellScreen()
+    ),
     GetPage(name: MainRoutes.addProduct, page: () => AgregarProductoScreen()),
     GetPage(name: MainRoutes.seleccionarFoto, page: () => AddPhotoScreen()),
 

@@ -1,63 +1,131 @@
+// lib/presentation/buy_sell/add/buysell_add_controller.dart
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import 'package:edu_app/models/buy-sell-details.dart';
 import 'package:edu_app/models/buy-sell.dart';
 import 'package:edu_app/models/product_model.dart';
 import 'package:edu_app/models/socio_model.dart';
+import 'package:edu_app/services/services.dart';
 import 'package:edu_app/services/buySellService.dart';
 import 'package:edu_app/services/partnerService.dart';
-import 'package:edu_app/services/services.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 enum PaymentType { contado, credito }
-class BuySellAddController extends ChangeNotifier {
-  final bool esCompra; // true = compra(proveedor), false = venta(cliente)
-  final int? id;       // id de la compra/venta (si estás editando)
-  BuySellAddController({this.esCompra = false, this.id}) {
-    debugPrint("Inicializando como ${esCompra ? 'Compra' : 'Venta'}");
-    // si id != null, podrías cargar la cabecera + detalles aquí.
-        _init(); // ✅ Llama la inicialización aquí
+
+class BuySellAddController extends GetxController {
+  BuySellAddController({required bool esCompra, int? id}) {
+    this.esCompra.value = esCompra;
+    if (id != null) {
+      this.id.value = id;
+      // aquí cargarías la cabecera y detalles si vas a editar
+    }
   }
+  // ---------------- Modo ----------------
+  final esCompra = false.obs;
+  final id = RxnInt(); // null cuando es nuevo
 
-  final PartnerService _service = PartnerService();
-  // socio seleccionado
-  final TextEditingController socio = TextEditingController();
-  final TextEditingController producto = TextEditingController();
-  final TextEditingController fecha = TextEditingController();
-bool get fechaInvalida {
-  if (pago != PaymentType.credito) return false;
-  if (_fechaVencimiento == null) return true;
+  // ---------------- UI  -----------------
+  late final ScrollController scrollCtrl;
+  final showFab = false.obs;
 
-  // 1) Hora actual en UTC:
-  final nowUtc = DateTime.now().toUtc();
-  // 2) Convertimos a Honduras (UTC-6):
-  final hn = nowUtc.subtract(const Duration(hours: 6));
-  // 3) Normalizamos a medianoche HN:
-  final hoyHn = DateTime(hn.year, hn.month, hn.day);
+  // ---------------- Campos --------------
+  final socio = TextEditingController();
+  final producto = TextEditingController();
+  final fecha   = TextEditingController();
 
-  // Si la fecha vencimiento es ANTES de hoy en HN → inválida
-  return _fechaVencimiento!.isBefore(hoyHn);
-}
-  // Guarda internamente la fecha seleccionada
+  final detalles = <BuySellDetails>[].obs;
+  final nombreInvalido = false.obs;
+  final pago = PaymentType.contado.obs;
+
+  // ---------------- Internos ------------
+  final PartnerService _partnerService = PartnerService();
   DateTime? _fechaVencimiento;
-  int? socioId;
-  int? SocioIDValidacion;
-  String? SocioNombreValidacion;
-  bool seleccionado = false;
-final List<BuySellDetails> detalles = [];
-    int? productoId;
+  int?   socioId;
+  int?   socioFinalId;
+  String? socioFinalNombre;
 
+  // =================== CICLO DE VIDA =================== //
+  @override
+  void onInit() {
+    super.onInit();
 
-void addEmptyDetalle({required int productoId, required String productoNombre}) {
-    final nextLinea = detalles.length + 1;
-    final d = BuySellDetails(
-      productoNombre: productoNombre,  // ← aquí
-      linea: nextLinea,
-      productoId: productoId,
-    );
-    detalles.add(d);
-    notifyListeners();
+    // Leer argumentos
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+    esCompra.value = args['esCompra'] ?? false;
+    id.value       = args['id'];
+
+    // FAB / Scroll
+    scrollCtrl = ScrollController()
+      ..addListener(() {
+        showFab.value = scrollCtrl.offset > 200;
+      });
+
+    // Pre-cargar info
+    _init();
   }
 
-  /// Recalcula total de una línea concreta
+  @override
+  void onClose() {
+    scrollCtrl.dispose();
+    socio.dispose();
+    producto.dispose();
+    fecha.dispose();
+    super.onClose();
+  }
+
+  // =================== INIT ============================= //
+  Future<void> _init() async {
+    if (id.value == null) {
+      await _setDefaultPartner();
+    } else {
+      // TODO: cargar cabecera + detalles para modo edición
+    }
+  }
+
+  Future<void> _setDefaultPartner() async {
+    final defaultName = esCompra.isTrue
+        ? 'Proveedor Final'
+        : 'Consumidor Final';
+
+    final partner = await _partnerService.getFinalPartner(defaultName);
+
+    socioFinalId     = partner?.id;
+    socioFinalNombre = partner?.nombre;
+
+    if (partner != null) {
+      setPartner(partner);
+    } else {
+      Get.log("⚠️ '$defaultName' no existe en BD");
+    }
+  }
+
+  // =================== PARTNER ========================== //
+  void setPartner(PartnerModel partner) {
+    socioId = partner.id;
+    socio.text = partner.nombre;
+    nombreInvalido.value = false;
+  }
+
+  void setPartnerSeleccionado(PartnerModel p) {
+    setPartner(p);
+  }
+
+  // =================== DETALLES ========================= //
+  void addEmptyDetalle({
+    required int productoId,
+    required String productoNombre,
+  }) {
+    final nextLinea = detalles.length + 1;
+    detalles.add(
+      BuySellDetails(
+        linea:         nextLinea,
+        productoId:    productoId,
+        productoNombre:productoNombre,
+      ),
+    );
+  }
+
   void updateDetalle({
     required int index,
     double? precio,
@@ -65,163 +133,19 @@ void addEmptyDetalle({required int productoId, required String productoNombre}) 
     double? factor,
   }) {
     final d = detalles[index];
-    if (precio != null) d.precio = precio;
+    if (precio   != null) d.precio   = precio;
     if (cantidad != null) d.cantidad = cantidad;
-    if (factor != null) d.factor = factor;
+    if (factor   != null) d.factor   = factor;
     d.recalcular();
-    notifyListeners();
+    detalles[index] = d; // trigger
   }
-  // validaciones básicas
-  bool nombreInvalido = false;
 
-   PaymentType pago = PaymentType.contado;
-void setPaymentType(PaymentType p) {
-  pago = p;
-  if (p == PaymentType.credito) {
-    // Hora local ya viene bien
-    final ahora = DateTime.now();
-    // Normalizamos a medianoche de hoy
-    final hoyDate = DateTime(ahora.year, ahora.month, ahora.day);
-    // Mañana
-    final mananaDate = hoyDate.add(- const Duration(days: 1));
-
-    _fechaVencimiento = mananaDate;
-    fecha.text = DateFormat('yyyy-MM-dd').format(mananaDate);
-  } else {
-    _fechaVencimiento = null;
-    fecha.clear();
-  }
-  notifyListeners();
-}
-Future<void> pickFechaVencimiento(BuildContext context) async {
-  // UTC actual menos 6 horas = hora de Honduras
-  final nowUtc = DateTime.now().toUtc();
-  final honduras = nowUtc.subtract(const Duration(hours: 6));
-
-  // Normalizamos a medianoche en Honduras
-  final hoyDate = DateTime(honduras.year, honduras.month, honduras.day);
-
-  final picked = await showDatePicker(
-    context: context,
-    initialDate: _fechaVencimiento ?? hoyDate,
-    firstDate: hoyDate,
-    lastDate: DateTime(hoyDate.year + 5, hoyDate.month, hoyDate.day),
-    locale: const Locale('es', 'ES'),
-  );
-
-  if (picked != null) {
-    _fechaVencimiento = picked;
-    fecha.text = DateFormat('yyyy-MM-dd').format(picked);
-    notifyListeners();
-  }
-}
-
-  void setPartner(PartnerModel partner) {
-    socio.text = partner.nombre;
-    socioId = partner.id;
-    nombreInvalido = false;
-    notifyListeners();
-  }
-    void setPartnerSeleccionado(PartnerModel partner) {
-    seleccionado = true;
-    notifyListeners();
-    setPartner(partner);
-  }
-  Future<void> _init() async {
-  
-    if (id == null) {
-      await setDefaultPartner(); // ✅ Solo si estás creando, no editando
-    } else {
-      // Aquí puedes cargar datos existentes por ID si estás editando
-    }
-  }
-Future<void> setDefaultPartner() async {
-  final defaultName = esCompra ? 'Proveedor Final' : 'Consumidor Final';
-  final partner = await _service.getFinalPartner(defaultName);
-   
-  SocioIDValidacion = partner?.id;
-  SocioNombreValidacion = partner?.nombre;
-
-  if (partner != null) {
-     print("cuanto entraaaaa");
-    setPartner(partner);
-  } else {
-    debugPrint("⚠️ No se encontró el socio '$defaultName' en la base de datos");
-  }
-}
-
-Future<void> validateAndSave() async {
-nombreInvalido = socio.text.trim().isEmpty;
- notifyListeners();
-if (nombreInvalido) return;
-print(socio);
-print(SocioNombreValidacion);
-
-if (socioId == SocioIDValidacion && socio.text != SocioNombreValidacion) {
-   await _saveSocio();
-}
-if(detalles.length > 0) {
-  final listaModelos = detalles.map((d) => BuySellDetalleModel(
-  ventaId: 0,            // temporal: se asigna tras insertar cabecera
-  linea: d.linea,
-  productoId: d.productoId,
-  costo: d.costo,
-  precio: d.precio,
-  cantidad: d.cantidad,
-  factor: d.factor,
-  total: d.total,
-)).toList();
-
-    final buySell = BuySell(
-    sociosId: socioId!,
-    fecha: fecha.text,
-    fechaVence: fecha.text,
-    total: detalles.sumTotal,
-    esCredito: pago == PaymentType.credito,
-    saldo: pago == PaymentType.credito ? detalles.sumTotal : 0.0,
-    comentario: '',
-    detalles: listaModelos,
-  );
-
-try {
-  if (esCompra) {
-    final compraId = await BuySellService.saveCompra(buySell);
-    print('Compra insertada OK, ID = ');
-  } else {
-    final ventaId = await BuySellService.saveVenta(buySell);
-    print('Venta insertada OK, ID =');
-  }
-} catch (error) {
-  print('Error al guardar: $error');
-  // Aquí puedes mostrar un diálogo, un SnackBar, etc.
-}
-}
-}
-
- Future<void> _saveSocio() async {
-    try {
-      final partner = PartnerModel(
-        id: null,
-        nombre: socio.text.trim(),
-        esProveedor: esCompra ? true : false
-      );
-        print("VA GUARDAR EL SOCIO XD");
-      final newId = await DatabaseHelper.insert(
-        ServiceStrings.socios,
-        partner.toJson(),
-      );
-      socioId = newId;  
-      
-      
-    } catch (e, st) {
-      debugPrint("❌ No se pudo guardar: $e\n$st");
-    }
-  }
   void incrementQuantity(int index) {
     detalles[index].cantidad++;
     detalles[index].recalcular();
-    notifyListeners();
+    detalles.refresh();
   }
+
   void decrementQuantity(int index) {
     final d = detalles[index];
     d.cantidad--;
@@ -229,46 +153,132 @@ try {
       detalles.removeAt(index);
     } else {
       d.recalcular();
+      detalles[index] = d;
     }
-    notifyListeners();
   }
+
+  // =================== PAGO / FECHA ===================== //
+  bool get fechaInvalida {
+    if (pago.value != PaymentType.credito) return false;
+    if (_fechaVencimiento == null) return true;
+    final hn = DateTime.now().subtract(const Duration(hours: 6));
+    final hoyHN = DateTime(hn.year, hn.month, hn.day);
+    return _fechaVencimiento!.isBefore(hoyHN);
+  }
+
+  void setPaymentType(PaymentType p) {
+    pago.value = p;
+    if (p == PaymentType.credito) {
+      final tomorrow = DateTime.now().add(const Duration(days: 1));
+      _fechaVencimiento = tomorrow;
+      fecha.text = DateFormat('yyyy-MM-dd').format(tomorrow);
+    } else {
+      _fechaVencimiento = null;
+      fecha.clear();
+    }
+  }
+
+  Future<void> pickFechaVencimiento(BuildContext context) async {
+    final hoyHN = DateTime.now().subtract(const Duration(hours: 6));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _fechaVencimiento ?? hoyHN,
+      firstDate: hoyHN,
+      lastDate: DateTime(hoyHN.year + 5),
+      locale: const Locale('es', 'ES'),
+    );
+    if (picked != null) {
+      _fechaVencimiento = picked;
+      fecha.text = DateFormat('yyyy-MM-dd').format(picked);
+    }
+  }
+
+  // =================== CRUD  ============================ //
   Future<void> saveProducto() async {
-    try {
-      final Addproducto = ProductoModel(
-        id: null,
-        nombre: producto.text.trim(),
-        precio: 0,
-        costo: 0,
-        stock: 0,
-        cateid: 0,
-        notas: "",
-        esServicio: false
-      );
-        print("VA GUARDAR EL SOCIO XD");
-      final newId = await DatabaseHelper.insert(
-        ServiceStrings.productos,
-        Addproducto.toJson(),
-      );
+    final nuevo = ProductoModel(
+      nombre: producto.text.trim(),
+      precio: 0,
+      costo : 0,
+      stock : 0,
+      cateid: 0,
+      notas : '',
+      esServicio: false,
+    );
 
-      addEmptyDetalle(productoId: newId,productoNombre:producto.text.trim()); 
-      producto.clear();
-      
-    } catch (e, st) {
-      debugPrint("❌ No se pudo guardar: $e\n$st");
+    final newId = await DatabaseHelper.insert(
+      ServiceStrings.productos,
+      nuevo.toJson(),
+    );
+
+    addEmptyDetalle(productoId: newId, productoNombre: nuevo.nombre);
+    producto.clear();
+  }
+
+  Future<void> validateAndSave() async {
+    nombreInvalido.value = socio.text.trim().isEmpty;
+    if (nombreInvalido.isTrue) return;
+
+    // Si cambió el nombre del “Final” → guardar socio nuevo
+    if (socioId == socioFinalId && socio.text != socioFinalNombre) {
+      await _saveSocio();
+    }
+
+    if (detalles.isEmpty) {
+  
+      return;
+    }
+
+    final listaDetalles = detalles
+        .map((d) => BuySellDetalleModel(
+              ventaId: 0,
+              linea: d.linea,
+              productoId: d.productoId,
+              costo: d.costo,
+              precio: d.precio,
+              cantidad: d.cantidad,
+              factor: d.factor,
+              total: d.total,
+            ))
+        .toList();
+
+    final total = detalles.fold<double>(0, (s, d) => s + d.total);
+
+    final cabecera = BuySell(
+      sociosId : socioId!,
+      fecha    : DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      fechaVence: _fechaVencimiento != null
+          ? DateFormat('yyyy-MM-dd').format(_fechaVencimiento!)
+          : null,
+      total    : total,
+      esCredito: pago.value == PaymentType.credito,
+      saldo    : pago.value == PaymentType.credito ? total : 0,
+      comentario: '',
+      detalles: listaDetalles,
+    );
+
+    try {
+      if (esCompra.isTrue) {
+        final id = await BuySellService.saveCompra(cabecera);
+
+      } else {
+        final id = await BuySellService.saveVenta(cabecera);
+
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'No se pudo guardar',
+          snackPosition: SnackPosition.BOTTOM);
+      rethrow;
     }
   }
 
-
-  bool validate() {
-    nombreInvalido = socio.text.trim().isEmpty;
-    notifyListeners();
-    return !nombreInvalido;
-  }
-
-  @override
-  void dispose() {
-    socio.dispose();
-      fecha.dispose();
-    super.dispose();
+  Future<void> _saveSocio() async {
+    final partner = PartnerModel(
+      nombre: socio.text.trim(),
+      esProveedor: esCompra.isTrue,
+    );
+    socioId = await DatabaseHelper.insert(
+      ServiceStrings.socios,
+      partner.toJson(),
+    );
   }
 }
