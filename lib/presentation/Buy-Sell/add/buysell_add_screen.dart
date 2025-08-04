@@ -1,5 +1,8 @@
 // lib/presentation/buy_sell/add/add_buy_sell_screen.dart
 import 'package:edu_app/models/buy-sell-details.dart';
+import 'package:edu_app/models/product_model.dart';
+import 'package:edu_app/presentation/products/list/products_controller.dart';
+import 'package:edu_app/presentation/products/list/products_screen.dart';
 import 'package:edu_app/shared_components/helpers/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,13 +15,7 @@ import 'package:edu_app/services/services.dart';
 class BuySellAddBinding extends Bindings {
   @override
   void dependencies() {
-    final args = Get.arguments as Map<String, dynamic>? ?? {};
-    Get.put(
-      BuySellAddController(
-        esCompra: args['esCompra'] ?? false,
-        id: args['id'],
-      ),
-    );
+   
   }
 }
 class AddBuySellScreen extends GetView<BuySellAddController> {
@@ -28,7 +25,13 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+      Get.put(
+        BuySellAddController(
+          esCompra: args['esCompra'] ?? false,
+          id: args['id'],
+        ),
+      );
     return Scaffold(
       appBar: _buildAppBar(theme),
       body: _buildBody(theme, context),
@@ -183,10 +186,15 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8))),
-                      onPressed: () {
+                      onPressed: ()async  {
                         if (controller.producto.text.trim().isNotEmpty) {
                           controller.saveProducto();
-                        }
+                        }else{
+                         final selected = await _openProductSelector(context);
+                      if (selected != null) {
+                        controller.setProductoSeleccionado(selected);
+                      } 
+       }
                       },
                       child: const Icon(Icons.add, color: Colors.white),
                     ),
@@ -339,6 +347,32 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
       ),
     );
   }
+
+   Future<ProductoModel?> _openProductSelector(BuildContext context) {
+      final idsYaSeleccionados =controller.detalles.map((d) => d.productoId).toSet();
+      final esCompraSeleccionado = controller.esCompra.value ?? false;
+
+  final prodCtrl = Get.isRegistered<ProductsController>()
+      ? Get.find<ProductsController>()          // ya existe
+      : Get.put(ProductsController());          // se crea nuevo
+
+  // 3️⃣  Limpiar / fijar filtros solo en esa instancia
+  prodCtrl.resetFilters(estado: ProductoEstado.activos);
+  return showModalBottomSheet<ProductoModel>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => ProductsScreen(
+      onSelect: (p) => Navigator.pop(context, p),
+      excludeIds: idsYaSeleccionados,
+      esCompra : esCompraSeleccionado ?? false
+    ),
+  );
+}
+
 
 }
   class _DetalleCard extends StatelessWidget {

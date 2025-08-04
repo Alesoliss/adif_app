@@ -11,7 +11,7 @@ class BuySellDetails {
 
   BuySellDetails({
     this.compraId = 0,
-    required this.linea,
+    this.linea = 0,
     required this.productoId,
       required this.productoNombre,
     this.costo = 0,
