@@ -14,11 +14,11 @@ class PartnerScreen extends StatefulWidget {
   final String initialName;
 
   const PartnerScreen({
-    Key? key,
+    super.key,
     this.onSelect,
     this.initialName = "Clientes",
-  })  : isPicker = onSelect != null,
-        super(key: key);
+  })  : isPicker = onSelect != null;
+       
 
   @override
   State<PartnerScreen> createState() => _PartnerScreenState();
@@ -44,7 +44,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
       barrierDismissible: true,
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (_, __, ___) => Align(
+      pageBuilder: (_, _, _) => Align(
         alignment: Alignment.centerRight,
         child: FractionallySizedBox(
           widthFactor: 0.70,
@@ -54,7 +54,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
           ),
         ),
       ),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
+      transitionBuilder: (_, anim, _, child) => SlideTransition(
         position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
             .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
         child: child,

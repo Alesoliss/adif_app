@@ -333,8 +333,20 @@ class AgregarProductoScreen extends StatelessWidget {
                                 focusNode,
                                 onFieldSubmitted,
                               ) {
-                                ctrl.categoriaNombre.text =
-                                    textEditingController.text;
+                                textEditingController.text =
+                                    ctrl.categoriaNombre.text;
+                                textEditingController
+                                    .selection = TextSelection.fromPosition(
+                                  TextPosition(
+                                    offset: textEditingController.text.length,
+                                  ),
+                                );
+
+                                // Vincula el cambio a tu ctrl.categoriaNombre
+                                textEditingController.addListener(() {
+                                  ctrl.categoriaNombre.text =
+                                      textEditingController.text;
+                                });
 
                                 return Stack(
                                   alignment: Alignment.centerRight,

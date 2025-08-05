@@ -70,6 +70,7 @@ class ProductoAddController extends ChangeNotifier {
             ).nombre;
           }
         }
+        
         notifyListeners();
       }
     } catch (e) {
