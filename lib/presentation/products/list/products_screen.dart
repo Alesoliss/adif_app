@@ -6,9 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ProductsScreen extends StatelessWidget {
-  ProductsScreen({super.key});
-
+  final void Function(ProductoModel)? onSelect;
+    final Set<int>? excludeIds;
+    final bool esCompra;
+   ProductsScreen({this.onSelect, this.excludeIds,    this.esCompra   = false, super.key});  // ← aquí
   final controller = Get.put(ProductsController());
+  
   final TextEditingController searchController = TextEditingController();
   final RxString query = ''.obs;
 
@@ -81,23 +84,22 @@ class ProductsScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.black87),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
-                shape: const CircleBorder(),
-                elevation: 1,
+        if (onSelect == null)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: IconButton(
+                icon: const Icon(Icons.add, color: Colors.black87),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                ),
+                onPressed: () async {
+                  final result = await Get.toNamed(MainRoutes.addProduct);
+                  if (result == true) await controller.loadProductos();
+                },
               ),
-              onPressed: () async {
-                final result = await Get.toNamed(MainRoutes.addProduct);
-                if (result == true) {
-                  await controller.loadProductos();
-                }
-              },
             ),
-          ),
         ],
       ),
       body: Column(
@@ -109,6 +111,7 @@ class ProductsScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               final productosFiltrados = controller.productos.where((producto) {
+            if (excludeIds?.contains(producto.id) ?? false) return false;
                 final filtro = query.value.toLowerCase();
                 final coincideBusqueda =
                     producto.nombre.toLowerCase().contains(filtro) ||
@@ -154,36 +157,40 @@ class ProductsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Row(
-                children: [
-                  const Icon(Icons.search, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Buscar productos...',
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (value) => query.value = value,
+Widget _buildSearchBar() {
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+    child: Row(
+      children: [
+        // -------- Buscador ----------
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(14),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                const Icon(Icons.search, color: Colors.grey),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Buscar productos...',
+                      border: InputBorder.none,
                     ),
+                    onChanged: (value) => query.value = value,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+        ),
+
+        // -------- Botón filtro (solo cuando onSelect == null) ----------
+        if (onSelect == null) ...[
           const SizedBox(width: 8),
           SizedBox(
             height: 48,
@@ -201,32 +208,44 @@ class ProductsScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
+      ],
+    ),
+  );
+}         
   Widget _cardProductWidget(ProductoModel producto, BuildContext context) {
     final theme = Theme.of(context);
+  final isCompra = esCompra;           // ya es bool
 
+  final etiqueta = isCompra ? 'Costo' : 'Precio';
+final double valor = isCompra
+    ? (producto.costo  ?? 0)   // si viene null → 0
+    : (producto.precio ?? 0);
     return GestureDetector(
       onTap: () async {
-        final result = await Get.toNamed(
-          MainRoutes.addProduct,
-          arguments: {'id': producto.id}, // 👈 Envías el id del producto
-        );
-        if (result == true) {
-          await controller.loadProductos(); // 👈 Recarga la lista
+        if (onSelect != null) {
+          // --- MODO SELECTOR -----------------------------------------------
+          onSelect!(producto);
+          //Navigator.pop(context);
+        } else {
+          // --- MODO NORMAL -------------------------------------------------
+          final result = await Get.toNamed(
+            MainRoutes.addProduct,
+            arguments: {'id': producto.id},
+          );
+          if (result == true) await controller.loadProductos();
         }
       },
       child: Card(
         color: Colors.white,
         margin: const EdgeInsets.symmetric(vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 2,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
+              // mini-imagen / icono
               Container(
                 width: 80,
                 height: 80,
@@ -235,7 +254,8 @@ class ProductsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   image: producto.img != null && producto.img!.isNotEmpty
                       ? DecorationImage(
-                          image: MemoryImage(Uint8List.fromList(producto.img!)),
+                          image: MemoryImage(
+                              Uint8List.fromList(producto.img!)),
                           fit: BoxFit.cover,
                         )
                       : null,
@@ -245,6 +265,7 @@ class ProductsScreen extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: 16),
+              // datos del producto
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,10 +278,8 @@ class ProductsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Precio: L. ${producto.precio.toStringAsFixed(2)}',
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                  Text(        '$etiqueta: L. ${valor.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodyMedium),
                     Text(
                       'Stock: ${producto.stock}',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -283,7 +302,10 @@ class ProductsScreen extends StatelessWidget {
       ),
     );
   }
+
 }
+
+
 
 class _FiltroChip extends StatelessWidget {
   final String label;
@@ -296,7 +318,8 @@ class _FiltroChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.color,
-  });
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -320,7 +343,6 @@ class _FiltroChip extends StatelessWidget {
     );
   }
 }
-
 class _PanelFiltros extends StatelessWidget {
   final ProductsController controller;
 

@@ -111,17 +111,29 @@ class BuySellAddController extends GetxController {
     setPartner(p);
   }
 
+
+    void setProductoSeleccionado(ProductoModel p) {
+      double precio = 0;
+      if(esCompra == true && p.costo != 0){  
+        precio = p.costo ?? 0;
+        }else if(p.precio != 0){  
+        precio = p.precio;
+        }
+      addEmptyDetalle(productoId: p.id ?? 0, productoNombre: p.nombre, productoprecio: precio);
+    }
   // =================== DETALLES ========================= //
   void addEmptyDetalle({
     required int productoId,
     required String productoNombre,
+     double? productoprecio,
   }) {
-    final nextLinea = detalles.length + 1;
+
     detalles.add(
       BuySellDetails(
-        linea:         nextLinea,
         productoId:    productoId,
         productoNombre:productoNombre,
+        precio: productoprecio ?? 0,
+
       ),
     );
   }
@@ -228,12 +240,29 @@ class BuySellAddController extends GetxController {
       return;
     }
 
-    final listaDetalles = detalles
+  final listaDetallesLinea = detalles
+      .asMap()                       // convierte la lista en un map {indice: elemento}
+      .entries                       // iterable de MapEntry<int, Detalle>
+      .map((entry) {
+        final i = entry.key;         // índice (0, 1, 2…)
+        final d = entry.value;       // el objeto Detalle original
+        return BuySellDetalleModel(
+          ventaId: 0,
+          linea: i + 1,              // 1, 2, 3, 4…
+          productoId: d.productoId,
+          precio: d.precio,
+          cantidad: d.cantidad,
+          factor: d.factor,
+          total: d.total,
+        );
+      })
+      .toList();
+
+     final listaDetalles = listaDetallesLinea
         .map((d) => BuySellDetalleModel(
               ventaId: 0,
               linea: d.linea,
               productoId: d.productoId,
-              costo: d.costo,
               precio: d.precio,
               cantidad: d.cantidad,
               factor: d.factor,
@@ -248,7 +277,7 @@ class BuySellAddController extends GetxController {
       fecha    : DateFormat('yyyy-MM-dd').format(DateTime.now()),
       fechaVence: _fechaVencimiento != null
           ? DateFormat('yyyy-MM-dd').format(_fechaVencimiento!)
-          : null,
+          : DateFormat('yyyy-MM-dd').format(DateTime.now()),
       total    : total,
       esCredito: pago.value == PaymentType.credito,
       saldo    : pago.value == PaymentType.credito ? total : 0,
@@ -259,7 +288,7 @@ class BuySellAddController extends GetxController {
     try {
       if (esCompra.isTrue) {
         final id = await BuySellService.saveCompra(cabecera);
-
+        
       } else {
         final id = await BuySellService.saveVenta(cabecera);
 

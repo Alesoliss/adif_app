@@ -26,7 +26,6 @@ class BuySellService {
         'compraId': compraId,
         'linea': det.linea,
         'productoId': det.productoId,
-        'costo': det.costo,
         'factor': det.factor,
         'precio': det.precio,     // si lo necesitas
         'cantidad': det.cantidad,
@@ -49,7 +48,6 @@ class BuySellService {
         ServiceStrings.productos,
         {
           'stock': newStock,
-          'costo': det.costo,
         },
         where: 'id = ?',
         whereArgs: [det.productoId],
@@ -79,7 +77,6 @@ class BuySellService {
         'ventaId': ventaId,
         'linea': det.linea,
         'productoId': det.productoId,
-        'costo': det.costo,
         'precio': det.precio,
         'factor': det.factor,
         'cantidad': det.cantidad,

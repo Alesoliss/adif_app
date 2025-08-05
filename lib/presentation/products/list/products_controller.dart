@@ -46,6 +46,18 @@ class ProductsController extends GetxController {
     loadProductos();
   }
 
+  void resetFilters({
+  ProductoTipo tipo    = ProductoTipo.todos,
+  ProductoEstado estado = ProductoEstado.activos,
+  RangeValues rango    = const RangeValues(0, 1000),
+  String categoria     = '',
+  }) {
+    tipoFiltro.value        = tipo;
+    estadoFiltro.value      = estado;
+    rangoPrecioFiltro.value = rango;
+    categoriaFiltro.value   = categoria;
+  }
+
   Future<void> loadProductos() async {
     loading.value = true;
 

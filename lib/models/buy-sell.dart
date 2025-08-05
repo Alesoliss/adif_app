@@ -76,7 +76,6 @@ class BuySellDetalleModel {
   final int ventaId;
   final int linea;
   final int productoId;
-  final double costo;
   final double precio;
   final double cantidad;
   final double factor;
@@ -86,7 +85,6 @@ class BuySellDetalleModel {
     required this.ventaId,
     required this.linea,
     required this.productoId,
-    required this.costo,
     required this.precio,
     required this.cantidad,
     required this.factor,
@@ -98,7 +96,6 @@ class BuySellDetalleModel {
       ventaId: json['ventaId'] as int,
       linea: json['linea'] as int,
       productoId: json['productoId'] as int,
-      costo: (json['costo'] as num).toDouble(),
       precio: (json['precio'] as num).toDouble(),
       cantidad: (json['cantidad'] as num).toDouble(),
       factor: (json['factor'] as num).toDouble(),
@@ -111,7 +108,6 @@ class BuySellDetalleModel {
       'ventaId': ventaId,
       'linea': linea,
       'productoId': productoId,
-      'costo': costo,
       'precio': precio,
       'cantidad': cantidad,
       'factor': factor,
