@@ -14,8 +14,8 @@ class PartnerService {
 
   final rows = await db.query(
     table,
-    where: '${ServiceStrings.esProveedor} = ? AND nombre NOT IN (?, ?)',
-    whereArgs: [isProveedor, 'Consumidor Final', 'Proveedor Final'],
+    where: ' nombre NOT IN (?, ?)',
+    whereArgs: [ 'Consumidor Final', 'Proveedor Final'],
     orderBy: '${ServiceStrings.id} DESC',
   );
 
