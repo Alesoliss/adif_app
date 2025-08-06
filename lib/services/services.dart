@@ -45,6 +45,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT,
         precio REAL,
+        costo REAL,
         stock REAL,
         cateid INTEGER,
         notas TEXT,
