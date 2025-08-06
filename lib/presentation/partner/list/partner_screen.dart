@@ -4,14 +4,17 @@ import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/presentation/partner/list/partner_screen_controller.dart';
 import 'package:edu_app/routes/app_routes.dart';
 import 'package:edu_app/services/partnerService.dart';
+import 'package:edu_app/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class PartnerScreen extends StatefulWidget {
   final void Function(PartnerModel)? onSelect;
   final bool isPicker;
   final String initialName;
+
 
   const PartnerScreen({
     Key? key,
@@ -110,25 +113,22 @@ class _PartnerScreenState extends State<PartnerScreen> {
     return AppBar(
       title: Obx(() {
         // isProveedores es RxBool
-        return Text(
-          controller.isProveedores.value ? "Proveedores" : "Clientes",
-          style: const TextStyle(color: Colors.black87),
-        );
+        final titulo = switch (controller.tipoFiltro.value) {
+        SocioTipo.todos        => 'Socios',
+        SocioTipo.clientes     => 'Clientes',
+        SocioTipo.proveedores  => 'Proveedores',
+      };
+      return Text(titulo, style: const TextStyle(color: Colors.black87));
       }),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
         onPressed: () => Get.back(),
       ),
-      actions: [
+        actions: [
         if (!widget.isPicker)
           IconButton(
             icon: const Icon(Icons.add, color: Colors.black87),
-            onPressed: () async {
-              final result = await Get.toNamed(MainRoutes.addPartner);
-              if (result == true) {
-                controller.loadPartners();
-              }
-            },
+             onPressed: () => _onAddPressed(context, controller),
           ),
         if (widget.isPicker)
           IconButton(
@@ -136,11 +136,11 @@ class _PartnerScreenState extends State<PartnerScreen> {
             onPressed: () => Navigator.pop(context),
           ),
       ],
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: true,
-    );
-  }
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+          );
+        }
 
   Widget _buildSearchBar() {
     return Padding(
@@ -213,6 +213,84 @@ class _PartnerScreenState extends State<PartnerScreen> {
           ].join(' • '),
         ),
         trailing: const Icon(FontAwesomeIcons.whatsapp, color: Colors.green),
+      ),
+    );
+  }
+}
+
+Future<void> _onAddPressed(BuildContext context, PartnerController controller) async {
+  final tipo = await showDialog<_PartnerType>(
+    context: context,
+    builder: (_) => const _SelectPartnerDialog(),
+  );
+
+  if (tipo == null) return;           // usuario canceló
+
+  final esProveedor = tipo == _PartnerType.proveedor;
+
+  final result = await Get.toNamed(
+    MainRoutes.addPartner,
+    arguments: {'esProveedor': esProveedor},
+  );
+
+  if (result == true) {
+    controller.loadPartners();        // refresca la lista
+  }
+}
+
+enum _PartnerType { cliente, proveedor }
+class _SelectPartnerDialog extends StatelessWidget {
+  const _SelectPartnerDialog({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+
+    Widget _option(_PartnerType type, String label) => InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => Navigator.pop(context, type),   // ← devuelve la elección
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color.withOpacity(.15),
+                ),
+                child: Icon(
+                  LucideIcons.userPlus,
+                  size: 32,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(label, style: const TextStyle(fontSize: 14)),
+            ],
+          ),
+        );
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('¿A quién deseas agregar?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _option(_PartnerType.cliente, 'Cliente'),
+                _option(_PartnerType.proveedor, 'Proveedor'),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }

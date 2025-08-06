@@ -41,6 +41,8 @@ class PartnerController extends GetxController {
     tipoFiltro.value = tipo;
   }
 
+  
+
   void togglePartnerType() {
     // cambio name e isProveedores reactivamente
     name.value = isProveedores.value

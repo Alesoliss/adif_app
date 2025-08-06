@@ -20,20 +20,11 @@ class AddPartnerScreen extends StatelessWidget {
         elevation: 0,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: IconButton(
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: const CircleBorder(),
-              shadowColor: Colors.black12,
-              elevation: 1,
-            ),
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
+              ),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+        onPressed: () => Get.back(result: true),   // ← devuelve “true”
+      ),
         centerTitle: true,
         title: Text(
           id == null
