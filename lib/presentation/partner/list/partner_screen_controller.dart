@@ -17,16 +17,24 @@ class PartnerController extends GetxController {
   final RxBool loading       = false.obs;
   final RxList<PartnerModel> socios    = <PartnerModel>[].obs;
   final Rx<SocioTipo> tipoFiltro       = SocioTipo.todos.obs;
-
-  PartnerController(this._service, {required String initialName})
-      : name = initialName.obs {
-    // inicializo al crear
+ final bool autoFilterByName;
+  PartnerController(
+    this._service, {
+    required String initialName,
+    this.autoFilterByName = false,
+  }) : name = initialName.obs {
     _init();
   }
 
+
   Future<void> _init() async {
-    // Determino el tipo
-    isProveedores.value = name.value == ServiceStrings.proveedores;
+    print(name.value);
+    if (autoFilterByName) {
+      print("HOLAAAA ENTRA?");
+          print(isProveedores.value);
+      aplicarFiltros(name.value == ServiceStrings.proveedores ? SocioTipo.proveedores : SocioTipo.clientes);
+
+    }
     await loadPartners();
   }
 
@@ -39,6 +47,7 @@ class PartnerController extends GetxController {
 
   void aplicarFiltros(SocioTipo tipo) {
     tipoFiltro.value = tipo;
+    print(tipoFiltro.value);
   }
 
   
@@ -51,4 +60,5 @@ class PartnerController extends GetxController {
     isProveedores.value = !isProveedores.value;
     loadPartners();
   }
+
 }

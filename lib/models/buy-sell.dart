@@ -1,12 +1,15 @@
 class BuySell {
   final int? id;
   final int sociosId;
+  final String? socios;
   final String fecha;
   final String? fechaVence;
   final double total;
   final bool esCredito;
   final double saldo;
   final String? comentario;
+  final bool? esCompra;
+  final int? estado;
   final List<BuySellDetalleModel> detalles;
 
   BuySell({
@@ -18,6 +21,9 @@ class BuySell {
     this.esCredito = false,
     required this.saldo,
     this.comentario,
+    this.esCompra,
+    this.estado,
+    this.socios = "",
     this.detalles = const [],
   });
 
@@ -31,6 +37,9 @@ class BuySell {
       esCredito: (json['esCredito'] ?? 0) == 1,
       saldo: (json['saldo'] as num).toDouble(),
       comentario: json['comentario'] as String?,
+      esCompra: json['esCompra'] as bool?,
+      estado: json['estado'] as int?,
+      socios: json['socios'] as String,
     );
   }
 

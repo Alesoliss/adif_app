@@ -105,7 +105,7 @@ dependencies:
   readmore: ^3.0.0
   animate_do: ^4.2.0
   smooth_page_indicator: ^1.2.1
-
+  workmanager: ^0.5.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

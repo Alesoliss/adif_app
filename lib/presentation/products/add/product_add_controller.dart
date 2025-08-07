@@ -110,11 +110,8 @@ class ProductoAddController extends ChangeNotifier {
       );
 
       if (id == null) {
-        final nuevoId = await DatabaseHelper.insert(
-          ServiceStrings.productos,
-          producto.toJson(),
-        );
-        debugPrint("✅ Guardado con éxito: ${producto.nombre} con ID: $nuevoId");
+       await insertar50kConFor(producto);
+      
         limpiar();
       } else {
         await DatabaseHelper.update(
@@ -129,6 +126,21 @@ class ProductoAddController extends ChangeNotifier {
     }
   }
 
+
+Future<void> insertar50kConFor(ProductoModel producto ) async {
+  final sw = Stopwatch()..start();
+
+  for (var i = 0; i < 25000; i++) {
+    print("REGISTRO:" + i.toString());
+    await DatabaseHelper.insert(
+      ServiceStrings.productos,
+      producto.toJson(),
+    );
+  }
+
+  sw.stop();
+  debugPrint('Tiempo total: ${sw.elapsed}');
+}
   // ----------- Imagen -----------
   Future<void> setFotoPath(String path) async {
     try {

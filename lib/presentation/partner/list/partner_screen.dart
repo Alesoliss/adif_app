@@ -19,12 +19,13 @@ class PartnerScreen extends StatefulWidget {
   const PartnerScreen({
     super.key,
     this.onSelect,
-    this.initialName = "Clientes",
+      this.initialName = ServiceStrings.clientes,
   })  : isPicker = onSelect != null;
        
 
   @override
   State<PartnerScreen> createState() => _PartnerScreenState();
+  
 }
 
 class _PartnerScreenState extends State<PartnerScreen> {
@@ -35,10 +36,20 @@ class _PartnerScreenState extends State<PartnerScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(
-      PartnerController(PartnerService(), initialName: widget.initialName),
+  controller = Get.put(
+    PartnerController(
+      PartnerService(),
+      initialName: widget.initialName,
+      autoFilterByName: widget.isPicker,
+    ),
     );
   }
+
+    @override
+void dispose() {
+  Get.delete<PartnerController>();   // elimina la instancia
+  super.dispose();
+}
 
   void _showFilterPanel() {
     showGeneralDialog(
@@ -172,15 +183,19 @@ class _PartnerScreenState extends State<PartnerScreen> {
               ),
             ),
           ),
+         if (!widget.isPicker) ...[
           const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.tune, color: Colors.white),
             style: IconButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             onPressed: _showFilterPanel,
           ),
+        ],
         ],
       ),
     );
@@ -212,7 +227,11 @@ class _PartnerScreenState extends State<PartnerScreen> {
             if ((p.notas    ?? '').isNotEmpty) p.notas!,
           ].join(' • '),
         ),
-        trailing: const Icon(FontAwesomeIcons.whatsapp, color: Colors.green),
+          
+       trailing: widget.isPicker
+          ? null
+          : const Icon(FontAwesomeIcons.whatsapp, color: Colors.green),
+                
       ),
     );
   }

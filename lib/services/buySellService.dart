@@ -48,12 +48,55 @@ class BuySellService {
         ServiceStrings.productos,
         {
           'stock': newStock,
+          'costo':det.precio
         },
         where: 'id = ?',
         whereArgs: [det.productoId],
       );
     }
   }
+
+
+Future<List<BuySell>> getAllBuySell() async {
+  final db = await DatabaseHelper.initDB();
+
+  const sql = '''
+    SELECT  c.id,
+            c.sociosId,
+            s.nombre          AS socios,
+            c.fecha,
+            c.fechaVence,
+            c.total,
+            c.esCredito,
+            c.saldo,
+            1                 AS esCompra,
+            c.estado
+    FROM    compras AS c
+    INNER JOIN socios AS s ON s.id = c.sociosId
+
+    UNION ALL
+
+    SELECT  v.id,
+            v.sociosId,
+            s.nombre          AS socios,
+            v.fecha,
+            v.fechaVence,
+            v.total,
+            v.esCredito,
+            v.saldo,
+            0                 AS esCompra,
+            v.estado
+    FROM    ventas  AS v
+    INNER JOIN socios AS s ON s.id = v.sociosId
+
+    ORDER BY fecha DESC, id DESC;
+  ''';
+
+  final rows = await db.rawQuery(sql);
+
+  return rows.map((json) => BuySell.fromJson(json)).toList();
+}
+
 
   /// Inserta una venta y sus detalles, y ajusta stock/precio
   static Future<void> saveVenta(BuySell venta) async {
@@ -98,7 +141,7 @@ class BuySellService {
         ServiceStrings.productos,
         {
           'stock': newStock < 0 ? 0 : newStock,
-          'precio': det.precio, // asumimos que el último precio de venta es el precio actual
+          'precio': det.precio, 
         },
         where: 'id = ?',
         whereArgs: [det.productoId],

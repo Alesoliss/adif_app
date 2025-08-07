@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -18,6 +20,8 @@ class DatabaseHelper {
         await _upgradeDB(db, oldVersion, newVersion);
       },
     );
+
+      _logDbSize(path);
     return _db!;
   }
 
@@ -186,7 +190,20 @@ await db.execute('''
     final db = await initDB();
     return await db.insert(table, data);
   }
-
+ static Future<void> _logDbSize(String path) async {
+    final file = File(path);
+    if (await file.exists()) {
+      final bytes = await file.length();
+      final kb = bytes / 1024;
+      final mb = kb / 1024;
+      print(
+        '📦 Base de datos: ${(kb).toStringAsFixed(1)} KB '
+        '(${mb.toStringAsFixed(2)} MB) @ $path',
+      );
+    } else {
+      print('No existe el archivo de base de datos en $path');
+    }
+  }
   static Future<List<Map<String, dynamic>>> getAll(String table) async {
     final db = await initDB();
     return await db.query(table);
