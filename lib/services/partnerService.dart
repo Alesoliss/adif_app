@@ -1,6 +1,6 @@
 import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/services/services.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter/material.dart';
 
 class PartnerService {
   final String table = ServiceStrings.socios;
@@ -9,7 +9,7 @@ class PartnerService {
     final db = await DatabaseHelper.initDB();
     
     // Determinamos si es proveedor o cliente
-    final isProveedor = name == ServiceStrings.proveedores ? 1 : 0;
+    //final isProveedor = name == ServiceStrings.proveedores ? 1 : 0;
 
 
   final rows = await db.query(
@@ -34,7 +34,7 @@ class PartnerService {
 
   if (rows.isNotEmpty) {
    final model = PartnerModel.fromJson(rows.first);
-    print('🔍 Parsed PartnerModel: id=${model.id}, nombre="${model.nombre}"');
+    debugPrint('🔍 Parsed PartnerModel: id=${model.id}, nombre="${model.nombre}"');
     return model;
   }
   return null;

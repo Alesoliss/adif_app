@@ -88,7 +88,7 @@ class _HomeCardState extends State<HomeCard>
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: widget.iconColor.withOpacity(0.1),
+                      color: widget.iconColor.withAlpha(26),
                       shape: BoxShape.circle,
                     ),
                     padding: const EdgeInsets.all(14),

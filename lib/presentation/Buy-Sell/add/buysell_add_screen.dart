@@ -12,45 +12,42 @@ import 'buysell_add_controller.dart';
 import '../../partner/list/partner_screen.dart';
 import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/services/services.dart';
+
 class BuySellAddBinding extends Bindings {
   @override
-  void dependencies() {
-   
-  }
+  void dependencies() {}
 }
+
 class AddBuySellScreen extends GetView<BuySellAddController> {
-  
   const AddBuySellScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final args = Get.arguments as Map<String, dynamic>? ?? {};
-      Get.put(
-        BuySellAddController(
-          esCompra: args['esCompra'] ?? false,
-          id: args['id'],
-        ),
-      );
+    Get.put(
+      BuySellAddController(esCompra: args['esCompra'] ?? false, id: args['id']),
+    );
     return Scaffold(
       appBar: _buildAppBar(theme),
       body: _buildBody(theme, context),
       bottomNavigationBar: _buildFooter(theme),
-     floatingActionButton: Obx(() => Visibility(
-      visible: controller.showFab.value,
-      maintainSize: true,   // evita re-layout brusco
-      maintainAnimation: true,
-      maintainState: true,
-      child: FloatingActionButton(
-        onPressed: () {
-          if (controller.producto.text.trim().isNotEmpty) {
-            controller.saveProducto();
-          }
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Obx(
+        () => Visibility(
+          visible: controller.showFab.value,
+          maintainSize: true, // evita re-layout brusco
+          maintainAnimation: true,
+          maintainState: true,
+          child: FloatingActionButton(
+            onPressed: () {
+              if (controller.producto.text.trim().isNotEmpty) {
+                controller.saveProducto();
+              }
+            },
+            child: const Icon(Icons.add),
+          ),
+        ),
       ),
-)),
-
     );
   }
 
@@ -84,7 +81,10 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
               ? (isCompra ? 'Detalles compra' : 'Detalles venta')
               : (isCompra ? 'Agregar compra' : 'Agregar venta'),
           style: const TextStyle(
-              color: Colors.black87, fontWeight: FontWeight.w600, fontSize: 17),
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 17,
+          ),
         );
       }),
     );
@@ -95,8 +95,12 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     return Obx(
       () => SingleChildScrollView(
         controller: controller.scrollCtrl,
-        padding:
-            const EdgeInsets.only(left: 20, right: 20, top: 14, bottom: 120),
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 14,
+          bottom: 120,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -105,8 +109,11 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
               controller.esCompra.isTrue
                   ? 'Información del proveedor'
                   : 'Información del cliente',
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.grey),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: Colors.grey,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -117,8 +124,9 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                     readOnly: controller.socioId != null,
                     controller: controller.socio,
                     decoration: InputDecoration(
-                      labelText:
-                          controller.esCompra.isTrue ? 'Proveedor' : 'Cliente',
+                      labelText: controller.esCompra.isTrue
+                          ? 'Proveedor'
+                          : 'Cliente',
                       hintText: controller.esCompra.isTrue
                           ? 'Selecciona un proveedor'
                           : 'Selecciona un cliente',
@@ -148,11 +156,14 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () async {
                       final selected = await _openPartnerSelector(
-                          context, controller.esCompra.value);
+                        context,
+                        controller.esCompra.value,
+                      );
                       if (selected != null) {
                         controller.setPartnerSeleccionado(selected);
                       }
@@ -183,18 +194,20 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8))),
-                      onPressed: ()async  {
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () async {
                         if (controller.producto.text.trim().isNotEmpty) {
                           controller.saveProducto();
-                        }else{
-                         final selected = await _openProductSelector(context);
-                      if (selected != null) {
-                        controller.setProductoSeleccionado(selected);
-                      } 
-       }
+                        } else {
+                          final selected = await _openProductSelector(context);
+                          if (selected != null) {
+                            controller.setProductoSeleccionado(selected);
+                          }
+                        }
                       },
                       child: const Icon(Icons.add, color: Colors.white),
                     ),
@@ -232,14 +245,16 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
 
             // ----- Detalles -----
             if (controller.detalles.isNotEmpty) ...[
-              const Text('Detalles:',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              const Text(
+                'Detalles:',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: controller.detalles.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (_, i) {
                   final d = controller.detalles[i];
                   return _DetalleCard(
@@ -262,8 +277,7 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
   // -------------------- FOOTER ---------------------------
   Widget _buildFooter(ThemeData theme) {
     return Obx(() {
-      final total = controller.detalles.fold<double>(
-          0, (s, d) => s + d.total);
+      final total = controller.detalles.fold<double>(0, (s, d) => s + d.total);
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: const BoxDecoration(
@@ -275,37 +289,48 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
             Expanded(
               child: Text(
                 'Total: LPS ${total.toStringAsFixed(2)}',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-            onPressed: () async {
-                final saved = await controller.validateAndSave();   
-                  if (controller.detalles.isEmpty) {
- SnackbarHelper.show(
-                            type: SnackType.error,
-                            message:  'Debe tener un producto por lo menos'
-                          );
+              onPressed: () async {
+                await controller.validateAndSave();
+                if (controller.detalles.isEmpty) {
+                  SnackbarHelper.show(
+                    type: SnackType.error,
+                    message: 'Debe tener un producto por lo menos',
+                  );
                 }
-                if (!controller.nombreInvalido.isTrue && !controller.detalles.isEmpty) {
- SnackbarHelper.show(
-                            type: SnackType.success,
-                            message:  'La ${controller.esCompra.isTrue ? 'compra' : 'venta'} guarada correctamente'
-                          );
+                if (!controller.nombreInvalido.isTrue &&
+                    controller.detalles.isNotEmpty) {
+                  SnackbarHelper.show(
+                    type: SnackType.success,
+                    message:
+                        'La ${controller.esCompra.isTrue ? 'compra' : 'venta'} guardada correctamente',
+                  );
                 }
               },
-              child: Obx(() => Text(
-                    'GUARDAR ${controller.esCompra.isTrue ? 'COMPRA' : 'VENTA'}',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
-                  )),
+              child: Obx(
+                () => Text(
+                  'GUARDAR ${controller.esCompra.isTrue ? 'COMPRA' : 'VENTA'}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -319,10 +344,12 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     return Expanded(
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              isSelected ? Theme.of(ctx).colorScheme.primary : Colors.transparent,
-          foregroundColor:
-              isSelected ? Colors.white : Theme.of(ctx).colorScheme.primary,
+          backgroundColor: isSelected
+              ? Theme.of(ctx).colorScheme.primary
+              : Colors.transparent,
+          foregroundColor: isSelected
+              ? Colors.white
+              : Theme.of(ctx).colorScheme.primary,
           side: BorderSide(color: Theme.of(ctx).colorScheme.primary),
           elevation: 0,
         ),
@@ -333,49 +360,54 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
   }
 
   Future<PartnerModel?> _openPartnerSelector(
-      BuildContext context, bool esCompra) {
+    BuildContext context,
+    bool esCompra,
+  ) {
     return showModalBottomSheet<PartnerModel>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => PartnerScreen(
         onSelect: (p) => Navigator.pop(context, p),
-        initialName:
-            esCompra ? ServiceStrings.proveedores : ServiceStrings.clientes,
+        initialName: esCompra
+            ? ServiceStrings.proveedores
+            : ServiceStrings.clientes,
       ),
     );
   }
 
-   Future<ProductoModel?> _openProductSelector(BuildContext context) {
-      final idsYaSeleccionados =controller.detalles.map((d) => d.productoId).toSet();
-      final esCompraSeleccionado = controller.esCompra.value ?? false;
+  Future<ProductoModel?> _openProductSelector(BuildContext context) {
+    final idsYaSeleccionados = controller.detalles
+        .map((d) => d.productoId)
+        .toSet();
+    final esCompraSeleccionado = controller.esCompra.value;
 
-  final prodCtrl = Get.isRegistered<ProductsController>()
-      ? Get.find<ProductsController>()          // ya existe
-      : Get.put(ProductsController());          // se crea nuevo
+    final prodCtrl = Get.isRegistered<ProductsController>()
+        ? Get.find<ProductsController>() // ya existe
+        : Get.put(ProductsController()); // se crea nuevo
 
-  // 3️⃣  Limpiar / fijar filtros solo en esa instancia
-  prodCtrl.resetFilters(estado: ProductoEstado.activos);
-  return showModalBottomSheet<ProductoModel>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (_) => ProductsScreen(
-      onSelect: (p) => Navigator.pop(context, p),
-      excludeIds: idsYaSeleccionados,
-      esCompra : esCompraSeleccionado ?? false
-    ),
-  );
+    // 3️⃣  Limpiar / fijar filtros solo en esa instancia
+    prodCtrl.resetFilters(estado: ProductoEstado.activos);
+    return showModalBottomSheet<ProductoModel>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => ProductsScreen(
+        onSelect: (p) => Navigator.pop(context, p),
+        excludeIds: idsYaSeleccionados,
+        esCompra: esCompraSeleccionado,
+      ),
+    );
+  }
 }
 
-
-}
-  class _DetalleCard extends StatelessWidget {
+class _DetalleCard extends StatelessWidget {
   final BuySellDetails detalle;
   final int index;
   final bool esCompra;
@@ -384,7 +416,8 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     double? precio,
     double? cantidad,
     double? factor,
-  }) onUpdate;
+  })
+  onUpdate;
   final void Function(int) onInc;
   final void Function(int) onDec;
 
@@ -403,8 +436,7 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     return Card(
       color: Colors.white,
       elevation: 2,
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -413,8 +445,7 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
             // Producto
             Text(
               d.productoNombre,
-              style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
@@ -423,20 +454,20 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
               children: [
                 Expanded(
                   child: TextField(
-                    keyboardType:
-                        TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
-                        labelText: 'Precio',
-                        isDense: true,
-                        border: UnderlineInputBorder()),
+                      labelText: 'Precio',
+                      isDense: true,
+                      border: UnderlineInputBorder(),
+                    ),
                     controller: TextEditingController(
-                        text: d.precio.toStringAsFixed(2)),
-                                                               inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-                    onChanged: (v) => onUpdate(
-                        index: index,
-                        precio: double.tryParse(v) ?? 0),
+                      text: d.precio.toStringAsFixed(2),
+                    ),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (v) =>
+                        onUpdate(index: index, precio: double.tryParse(v) ?? 0),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -444,11 +475,12 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Cantidad',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey)),
+                      const Text(
+                        'Cantidad',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                       const SizedBox(height: 4),
-                      
+
                       Row(
                         children: [
                           _CircleIconButton(
@@ -460,27 +492,26 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                             child: TextField(
                               textAlign: TextAlign.center,
                               keyboardType: TextInputType.number,
-                              
+
                               decoration: InputDecoration(
                                 isDense: true,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(
-                                        vertical: 8),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
                                 border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               controller: TextEditingController(
-                                  text: d.cantidad
-                                      .toStringAsFixed(0)),
-                                                          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
+                                text: d.cantidad.toStringAsFixed(0),
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                               onChanged: (v) => onUpdate(
-                                  index: index,
-                                  cantidad:
-                                      double.tryParse(v) ?? 1),
+                                index: index,
+                                cantidad: double.tryParse(v) ?? 1,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -504,28 +535,31 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                 children: [
                   Expanded(
                     child: TextField(
-                      keyboardType: TextInputType
-                          .numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'Factor',
                         isDense: true,
                         border: UnderlineInputBorder(),
                       ),
                       controller: TextEditingController(
-                          text: d.factor.toStringAsFixed(2)),
-                                                                                    inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
+                        text: d.factor.toStringAsFixed(2),
+                      ),
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onChanged: (v) => onUpdate(
-                          index: index,
-                          factor: double.tryParse(v) ?? 1),
+                        index: index,
+                        factor: double.tryParse(v) ?? 1,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 24),
                   Text(
                     'LPS ${d.total.toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               )
@@ -536,7 +570,9 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                   Text(
                     'LPS ${d.total.toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -546,15 +582,12 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     );
   }
 }
+
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _CircleIconButton({
-    super.key,
-    required this.icon,
-    required this.onTap,
-  });
+  const _CircleIconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -567,9 +600,7 @@ class _CircleIconButton extends StatelessWidget {
         child: const SizedBox(
           width: 32,
           height: 32,
-          child: Center(
-            child: Icon(Icons.add, color: Colors.white, size: 20),
-          ),
+          child: Center(child: Icon(Icons.add, color: Colors.white, size: 20)),
         ),
       ),
     );
