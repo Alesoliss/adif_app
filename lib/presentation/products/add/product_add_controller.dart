@@ -3,9 +3,10 @@ import 'package:edu_app/models/category_model.dart';
 import 'package:edu_app/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:edu_app/services/services.dart';
+import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 
-class ProductoAddController extends ChangeNotifier {
+class ProductoAddController extends GetxController {
   final int? id;
 
   ProductoAddController({this.id}) {
@@ -19,6 +20,8 @@ class ProductoAddController extends ChangeNotifier {
   final TextEditingController stock = TextEditingController();
   final TextEditingController notas = TextEditingController();
   final TextEditingController categoriaId = TextEditingController();
+  final RxString categoriaTexto = ''.obs;
+
 
   bool activo = true;
   bool esServicio = false;
@@ -32,8 +35,8 @@ class ProductoAddController extends ChangeNotifier {
 
   //para categoria
   final TextEditingController categoriaNombre = TextEditingController();
-  bool categoriaNoExiste = false;
-  List<CategoriaModel> sugerenciasCategorias = [];
+  RxBool categoriaNoExiste = false.obs;
+  final RxList<CategoriaModel> sugerenciasCategorias = <CategoriaModel>[].obs;
 
   // ----------- Cargar producto si es edición -----------
   Future<void> _loadProducto(int id) async {
@@ -170,19 +173,23 @@ Future<void> insertar50kConFor(ProductoModel producto ) async {
 
   //para categorias
 
-  Future<void> cargarCategorias(String input) async {
-    final lista = await DatabaseHelper.getAll(ServiceStrings.categorias);
-    final categorias = lista.map((e) => CategoriaModel.fromJson(e)).toList();
+Future<void> cargarCategorias(String input) async {
+  final lista = await DatabaseHelper.getAll(ServiceStrings.categorias);
+  final categorias = lista.map((e) => CategoriaModel.fromJson(e)).toList();
 
-    final filtro = input.trim().toLowerCase();
-    sugerenciasCategorias = categorias
-        .where((cat) => cat.nombre.toLowerCase().contains(filtro))
-        .toList();
+  final filtro = input.trim().toLowerCase();
 
-    final existe = categorias.any((cat) => cat.nombre.toLowerCase() == filtro);
-    categoriaNoExiste = !existe;
-    notifyListeners();
-  }
+  // Actualiza las sugerencias
+  sugerenciasCategorias.value = categorias
+      .where((cat) => cat.nombre.toLowerCase().contains(filtro))
+      .toList();
+
+  // Verifica si la categoría existe exactamente
+  final existe = categorias.any((cat) => cat.nombre.toLowerCase() == filtro);
+  categoriaNoExiste.value = !existe;
+}
+
+
 
   Future<void> crearCategoriaSiNoExiste() async {
     final nombre = categoriaNombre.text.trim();
@@ -202,8 +209,8 @@ Future<void> insertar50kConFor(ProductoModel producto ) async {
         nuevaCategoria.toJson(),
       );
       categoriaId.text = id.toString();
-      categoriaNoExiste = false;
-      notifyListeners();
+      categoriaNoExiste.value = false;
+      //notifyListeners();
     }
   }
 
@@ -224,11 +231,13 @@ Future<void> insertar50kConFor(ProductoModel producto ) async {
     precioInvalido = false;
     stockInvalido = false;
 
-    notifyListeners();
+    update();
+
   }
 
   void actualizarUI() {
-    notifyListeners();
+    update();
+
   }
 
   @override
