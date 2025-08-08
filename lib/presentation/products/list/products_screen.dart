@@ -364,7 +364,7 @@ class _PanelFiltros extends StatelessWidget {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close), 
                   onPressed: () => Navigator.pop(context),
                 ),
                 const Text(

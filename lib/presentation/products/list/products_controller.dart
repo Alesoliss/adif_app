@@ -3,8 +3,7 @@ import 'package:edu_app/models/product_model.dart';
 import 'package:edu_app/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-class ProductsController extends GetxController {
+ class ProductsController extends GetxController {
   var productos = <ProductoModel>[].obs;
   var loading = false.obs;
   final RxBool mostrarServicios = false.obs;
@@ -71,6 +70,7 @@ class ProductsController extends GetxController {
     final data = await DatabaseHelper.getAll(ServiceStrings.categorias);
     sugerenciasCategorias.value =
         data.map((json) => CategoriaModel.fromJson(json)).toList();
+          debugPrint('✔ Categorías cargadas: ${sugerenciasCategorias.length}');
   }
 }
 

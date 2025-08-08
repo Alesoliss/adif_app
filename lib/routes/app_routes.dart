@@ -17,6 +17,7 @@ class MainRoutes {
   static const String addBuySell = "/addBuySell";
   static const String seleccionarFoto = "/addPhoto";
   static const String home = "/home";
+  static const String login = "/login";
 }
 
 class MainPages {

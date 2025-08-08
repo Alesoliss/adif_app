@@ -13,10 +13,10 @@ class AgregarProductoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.put(ProductoAddController());
-
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     final id = args['id'] as int?;
+    final ctrl = Get.put(ProductoAddController(id: id));
+
     return Scaffold(
       appBar: AppBar(
         // backgroundColor: Theme.of(
@@ -323,72 +323,80 @@ class AgregarProductoScreen extends StatelessWidget {
                           focusNode,
                           onFieldSubmitted,
                         ) {
-                          textEditingController.text =
-                              ctrl.categoriaNombre.text;
-                          textEditingController.selection =
-                              TextSelection.fromPosition(
-                                TextPosition(
-                                  offset: textEditingController.text.length,
-                                ),
-                              );
-
-                          // Vincula el cambio a tu ctrl.categoriaNombre
-                          textEditingController.addListener(() {
-                            ctrl.categoriaNombre.text =
-                                textEditingController.text;
+                          // Inicializar texto
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (textEditingController.text !=
+                                ctrl.categoriaNombre.text) {
+                              textEditingController.text =
+                                  ctrl.categoriaNombre.text;
+                              textEditingController.selection =
+                                  TextSelection.fromPosition(
+                                    TextPosition(
+                                      offset: textEditingController.text.length,
+                                    ),
+                                  );
+                            }
                           });
 
+                          // UI que depende de categoriaNoExiste
                           return Stack(
                             alignment: Alignment.centerRight,
                             children: [
-                              TextField(
-                                controller: textEditingController,
-                                focusNode: focusNode,
-                                onChanged: (value) {
-                                  ctrl.categoriaNombre.text = value;
-                                  ctrl.cargarCategorias(value);
-                                },
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 16,
-                                ),
-                                decoration: InputDecoration(
-                                  labelText: "Categoría (opcional)",
-                                  hintText: "Ej: Bebidas",
-                                  labelStyle: const TextStyle(
-                                    color: Color(0xFF8A8A8A),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
+                              Obx(() {
+                                final showError =
+                                    ctrl.categoriaNoExiste.value &&
+                                    ctrl.categoriaNombre.text.trim().isNotEmpty;
+
+                                return TextField(
+                                  controller: textEditingController,
+                                  focusNode: focusNode,
+                                  onChanged: (value) async {
+                                    ctrl.categoriaNombre.text = value;
+                                    ctrl.categoriaTexto.value =
+                                        value; // 👈 actualiza observable
+                                    await ctrl.cargarCategorias(value);
+                                  },
+
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 16,
                                   ),
-                                  hintStyle: const TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 15,
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  enabledBorder: const UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Color(0xFFE0E0E0),
-                                      width: 1.3,
+                                  decoration: InputDecoration(
+                                    labelText: "Categoría (opcional)",
+                                    hintText: "Ej: Bebidas",
+                                    labelStyle: const TextStyle(
+                                      color: Color(0xFF8A8A8A),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      width: 1.6,
+                                    hintStyle: const TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 15,
                                     ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    enabledBorder: const UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Color(0xFFE0E0E0),
+                                        width: 1.3,
+                                      ),
+                                    ),
+                                    focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        width: 1.6,
+                                      ),
+                                    ),
+                                    errorText: showError
+                                        ? 'La categoría no existe'
+                                        : null,
                                   ),
-                                  errorText:
-                                      textEditingController.text.trim().isEmpty
-                                      ? null
-                                      : (ctrl.categoriaNoExiste
-                                            ? 'La categoría no existe'
-                                            : null),
-                                ),
-                              ),
+                                );
+                              }),
+
                               if (textEditingController.text.isNotEmpty)
                                 IconButton(
                                   icon: const Icon(Icons.close, size: 20),
@@ -396,8 +404,7 @@ class AgregarProductoScreen extends StatelessWidget {
                                     textEditingController.clear();
                                     ctrl.categoriaNombre.clear();
                                     ctrl.categoriaId.clear();
-                                    ctrl.categoriaNoExiste = false;
-                                    ctrl.actualizarUI();
+                                    ctrl.categoriaNoExiste.value = false;
                                   },
                                 ),
                             ],
@@ -406,20 +413,25 @@ class AgregarProductoScreen extends StatelessWidget {
                     onSelected: (cat) {
                       ctrl.categoriaId.text = cat.id.toString();
                       ctrl.categoriaNombre.text = cat.nombre;
-                      ctrl.categoriaNoExiste = false;
-                      ctrl.actualizarUI();
+                      ctrl.categoriaNoExiste.value = false;
                     },
                   ),
-                  if (ctrl.categoriaNombre.text.trim().isNotEmpty &&
-                      ctrl.categoriaNoExiste)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: TextButton.icon(
-                        onPressed: () => ctrl.crearCategoriaSiNoExiste(),
-                        icon: const Icon(Icons.add),
-                        label: const Text("Crear nueva categoría"),
-                      ),
-                    ),
+
+                 Obx(() {
+  final nombre = ctrl.categoriaTexto.value.trim(); // 👈 ahora sí es observable
+  final noExiste = ctrl.categoriaNoExiste.value;
+  return (nombre.isNotEmpty && noExiste)
+      ? Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: TextButton.icon(
+            onPressed: ctrl.crearCategoriaSiNoExiste,
+            icon: const Icon(Icons.add),
+            label: const Text("Crear nueva categoría"),
+          ),
+        )
+      : const SizedBox.shrink();
+}),
+
                 ],
               ),
             ),
