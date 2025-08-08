@@ -1,38 +1,17 @@
 import 'package:edu_app/routes/app_routes.dart';
-import 'package:edu_app/services/ClearCache.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:workmanager/workmanager.dart';
+
 
 Future<void> main() async {
   runApp(const MyApp());
 
    WidgetsFlutterBinding.ensureInitialized();
 
-  // 1) Inicia Workmanager
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: kDebugMode,
-  );
-
-  // 2) Registra tarea periódica (cada 7 días)
-  await Workmanager().registerPeriodicTask(
-    cleanTask,          // id
-    cleanTask,          // name
-    frequency: const Duration(days: 7),
-    initialDelay: const Duration(minutes: 5), // arranca 5 min después de instalar
-    constraints: Constraints(
-      networkType: NetworkType.not_required, // sin red
-      requiresCharging: false,
-      requiresDeviceIdle: false,
-      requiresBatteryNotLow: true,
-      requiresStorageNotLow: true,
-    ),
-  );
 }
 
 class MyApp extends StatelessWidget {
