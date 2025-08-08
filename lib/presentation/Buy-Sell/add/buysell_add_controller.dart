@@ -32,7 +32,7 @@ class BuySellAddController extends GetxController {
   // ---------------- Campos --------------
   final socio = TextEditingController();
   final producto = TextEditingController();
-  final fecha   = TextEditingController();
+  final fecha = TextEditingController();
 
   final detalles = <BuySellDetails>[].obs;
   final nombreInvalido = false.obs;
@@ -41,8 +41,8 @@ class BuySellAddController extends GetxController {
   // ---------------- Internos ------------
   final PartnerService _partnerService = PartnerService();
   DateTime? _fechaVencimiento;
-  int?   socioId;
-  int?   socioFinalId;
+  int? socioId;
+  int? socioFinalId;
   String? socioFinalNombre;
 
   // =================== CICLO DE VIDA =================== //
@@ -53,7 +53,7 @@ class BuySellAddController extends GetxController {
     // Leer argumentos
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     esCompra.value = args['esCompra'] ?? false;
-    id.value       = args['id'];
+    id.value = args['id'];
 
     // FAB / Scroll
     scrollCtrl = ScrollController()
@@ -78,9 +78,7 @@ class BuySellAddController extends GetxController {
   Future<void> _init() async {
     if (id.value == null) {
       await _setDefaultPartner();
-    } else {
-      // TODO: cargar cabecera + detalles para modo edición
-    }
+    } else {}
   }
 
   Future<void> _setDefaultPartner() async {
@@ -90,7 +88,7 @@ class BuySellAddController extends GetxController {
 
     final partner = await _partnerService.getFinalPartner(defaultName);
 
-    socioFinalId     = partner?.id;
+    socioFinalId = partner?.id;
     socioFinalNombre = partner?.nombre;
 
     if (partner != null) {
@@ -111,29 +109,32 @@ class BuySellAddController extends GetxController {
     setPartner(p);
   }
 
-
-    void setProductoSeleccionado(ProductoModel p) {
-      double precio = 0;
-      if(esCompra == true && p.costo != 0){  
-        precio = p.costo ?? 0;
-        }else if(p.precio != 0){  
-        precio = p.precio;
-        }
-      addEmptyDetalle(productoId: p.id ?? 0, productoNombre: p.nombre, productoprecio: precio);
+  void setProductoSeleccionado(ProductoModel p) {
+    double precio = 0;
+    if (esCompra.isTrue && p.costo != 0) {
+      precio = p.costo ?? 0;
+    } else if (p.precio != 0) {
+      precio = p.precio;
     }
+
+    addEmptyDetalle(
+      productoId: p.id ?? 0,
+      productoNombre: p.nombre,
+      productoprecio: precio,
+    );
+  }
+
   // =================== DETALLES ========================= //
   void addEmptyDetalle({
     required int productoId,
     required String productoNombre,
-     double? productoprecio,
+    double? productoprecio,
   }) {
-
     detalles.add(
       BuySellDetails(
-        productoId:    productoId,
-        productoNombre:productoNombre,
+        productoId: productoId,
+        productoNombre: productoNombre,
         precio: productoprecio ?? 0,
-
       ),
     );
   }
@@ -145,9 +146,9 @@ class BuySellAddController extends GetxController {
     double? factor,
   }) {
     final d = detalles[index];
-    if (precio   != null) d.precio   = precio;
+    if (precio != null) d.precio = precio;
     if (cantidad != null) d.cantidad = cantidad;
-    if (factor   != null) d.factor   = factor;
+    if (factor != null) d.factor = factor;
     d.recalcular();
     detalles[index] = d; // trigger
   }
@@ -210,10 +211,10 @@ class BuySellAddController extends GetxController {
     final nuevo = ProductoModel(
       nombre: producto.text.trim(),
       precio: 0,
-      costo : 0,
-      stock : 0,
+      costo: 0,
+      stock: 0,
       cateid: 0,
-      notas : '',
+      notas: '',
       esServicio: false,
     );
 
@@ -236,66 +237,68 @@ class BuySellAddController extends GetxController {
     }
 
     if (detalles.isEmpty) {
-  
       return;
     }
 
-  final listaDetallesLinea = detalles
-      .asMap()                       // convierte la lista en un map {indice: elemento}
-      .entries                       // iterable de MapEntry<int, Detalle>
-      .map((entry) {
-        final i = entry.key;         // índice (0, 1, 2…)
-        final d = entry.value;       // el objeto Detalle original
-        return BuySellDetalleModel(
-          ventaId: 0,
-          linea: i + 1,              // 1, 2, 3, 4…
-          productoId: d.productoId,
-          precio: d.precio,
-          cantidad: d.cantidad,
-          factor: d.factor,
-          total: d.total,
-        );
-      })
-      .toList();
+    final listaDetallesLinea = detalles
+        .asMap() // convierte la lista en un map {indice: elemento}
+        .entries // iterable de MapEntry<int, Detalle>
+        .map((entry) {
+          final i = entry.key; // índice (0, 1, 2…)
+          final d = entry.value; // el objeto Detalle original
+          return BuySellDetalleModel(
+            ventaId: 0,
+            linea: i + 1, // 1, 2, 3, 4…
+            productoId: d.productoId,
+            precio: d.precio,
+            cantidad: d.cantidad,
+            factor: d.factor,
+            total: d.total,
+          );
+        })
+        .toList();
 
-     final listaDetalles = listaDetallesLinea
-        .map((d) => BuySellDetalleModel(
-              ventaId: 0,
-              linea: d.linea,
-              productoId: d.productoId,
-              precio: d.precio,
-              cantidad: d.cantidad,
-              factor: d.factor,
-              total: d.total,
-            ))
+    final listaDetalles = listaDetallesLinea
+        .map(
+          (d) => BuySellDetalleModel(
+            ventaId: 0,
+            linea: d.linea,
+            productoId: d.productoId,
+            precio: d.precio,
+            cantidad: d.cantidad,
+            factor: d.factor,
+            total: d.total,
+          ),
+        )
         .toList();
 
     final total = detalles.fold<double>(0, (s, d) => s + d.total);
 
     final cabecera = BuySell(
-      sociosId : socioId!,
-      fecha    : DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      sociosId: socioId!,
+      fecha: DateFormat('yyyy-MM-dd').format(DateTime.now()),
       fechaVence: _fechaVencimiento != null
           ? DateFormat('yyyy-MM-dd').format(_fechaVencimiento!)
           : DateFormat('yyyy-MM-dd').format(DateTime.now()),
-      total    : total,
+      total: total,
       esCredito: pago.value == PaymentType.credito,
-      saldo    : pago.value == PaymentType.credito ? total : 0,
+      saldo: pago.value == PaymentType.credito ? total : 0,
       comentario: '',
       detalles: listaDetalles,
     );
 
     try {
       if (esCompra.isTrue) {
-        final id = await BuySellService.saveCompra(cabecera);
-        
+        await BuySellService.saveCompra(cabecera);
       } else {
-        final id = await BuySellService.saveVenta(cabecera);
-
+        await BuySellService.saveVenta(cabecera);
       }
     } catch (e) {
-      Get.snackbar('Error', 'No se pudo guardar',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'No se pudo guardar',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       rethrow;
     }
   }

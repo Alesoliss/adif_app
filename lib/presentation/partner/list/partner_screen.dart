@@ -4,7 +4,6 @@ import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/presentation/partner/list/partner_screen_controller.dart';
 import 'package:edu_app/routes/app_routes.dart';
 import 'package:edu_app/services/partnerService.dart';
-import 'package:edu_app/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -259,13 +258,13 @@ Future<void> _onAddPressed(BuildContext context, PartnerController controller) a
 
 enum _PartnerType { cliente, proveedor }
 class _SelectPartnerDialog extends StatelessWidget {
-  const _SelectPartnerDialog({Key? key}) : super(key: key);
+const _SelectPartnerDialog();
 
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.primary;
 
-    Widget _option(_PartnerType type, String label) => InkWell(
+    Widget option(_PartnerType type, String label) => InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => Navigator.pop(context, type),   // ← devuelve la elección
           child: Column(
@@ -275,7 +274,7 @@ class _SelectPartnerDialog extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: color.withOpacity(.15),
+                  color: color.withAlpha(38),
                 ),
                 child: Icon(
                   LucideIcons.userPlus,
@@ -303,8 +302,8 @@ class _SelectPartnerDialog extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _option(_PartnerType.cliente, 'Cliente'),
-                _option(_PartnerType.proveedor, 'Proveedor'),
+                option(_PartnerType.cliente, 'Cliente'),
+                option(_PartnerType.proveedor, 'Proveedor'),
               ],
             ),
             const SizedBox(height: 12),

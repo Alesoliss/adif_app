@@ -9,7 +9,7 @@ class DatabaseHelper {
  static const int _dbVersion = 1; // Aumenta la versión de la DB
   static Future<Database> initDB() async {
     if (_db != null) return _db!;
-    final path = join(await getDatabasesPath(), 'adif_database.db'); 
+    final path = join(await getDatabasesPath(), 'adif_databasev2.db'); 
     _db = await openDatabase(
       path,
       version: _dbVersion,

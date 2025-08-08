@@ -30,7 +30,7 @@ class MainController extends GetxController {
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
-  const _PlaceholderScreen({required this.title, Key? key}) : super(key: key);
+const _PlaceholderScreen({required this.title});
 
   @override
   Widget build(BuildContext context) {

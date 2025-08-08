@@ -1,5 +1,4 @@
 import 'package:edu_app/models/buy-sell.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:edu_app/services/services.dart';
 
 class BuySellService {

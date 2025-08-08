@@ -70,8 +70,8 @@ class ProductoAddController extends ChangeNotifier {
             ).nombre;
           }
         }
-        
-        notifyListeners();
+
+        actualizarUI();
       }
     } catch (e) {
       debugPrint("❌ Error al cargar producto: $e");
@@ -84,7 +84,7 @@ class ProductoAddController extends ChangeNotifier {
     precioInvalido = double.tryParse(precio.text) == null;
     stockInvalido = double.tryParse(stock.text) == null;
 
-    notifyListeners();
+    actualizarUI();
 
     if (nombreInvalido || precioInvalido || stockInvalido) return;
 
@@ -162,7 +162,7 @@ Future<void> insertar50kConFor(ProductoModel producto ) async {
 
       imgBytes = img.encodePng(resized);
 
-      notifyListeners();
+      actualizarUI();
     } catch (e) {
       debugPrint("❌ Error al procesar imagen: $e");
     }
@@ -224,6 +224,10 @@ Future<void> insertar50kConFor(ProductoModel producto ) async {
     precioInvalido = false;
     stockInvalido = false;
 
+    notifyListeners();
+  }
+
+  void actualizarUI() {
     notifyListeners();
   }
 

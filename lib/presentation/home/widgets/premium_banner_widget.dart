@@ -38,7 +38,7 @@ class PremiumBannerWidget extends StatelessWidget {
                         "Disfruta de todos los beneficios",
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withAlpha(217),
                           fontFamily: 'Poppins',
                         ),
                       ),

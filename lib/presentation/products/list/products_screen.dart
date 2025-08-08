@@ -7,11 +7,16 @@ import 'package:get/get.dart';
 
 class ProductsScreen extends StatelessWidget {
   final void Function(ProductoModel)? onSelect;
-    final Set<int>? excludeIds;
-    final bool esCompra;
-   ProductsScreen({this.onSelect, this.excludeIds,    this.esCompra   = false, super.key});  // ← aquí
+  final Set<int>? excludeIds;
+  final bool esCompra;
+  ProductsScreen({
+    this.onSelect,
+    this.excludeIds,
+    this.esCompra = false,
+    super.key,
+  }); // ← aquí
   final controller = Get.put(ProductsController());
-  
+
   final TextEditingController searchController = TextEditingController();
   final RxString query = ''.obs;
 
@@ -84,7 +89,7 @@ class ProductsScreen extends StatelessWidget {
           ),
         ),
         actions: [
-        if (onSelect == null)
+          if (onSelect == null)
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: IconButton(
@@ -111,7 +116,7 @@ class ProductsScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               final productosFiltrados = controller.productos.where((producto) {
-            if (excludeIds?.contains(producto.id) ?? false) return false;
+                if (excludeIds?.contains(producto.id) ?? false) return false;
                 final filtro = query.value.toLowerCase();
                 final coincideBusqueda =
                     producto.nombre.toLowerCase().contains(filtro) ||
@@ -157,69 +162,70 @@ class ProductsScreen extends StatelessWidget {
     );
   }
 
-Widget _buildSearchBar() {
-  return Padding(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-    child: Row(
-      children: [
-        // -------- Buscador ----------
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(14),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Row(
-              children: [
-                const Icon(Icons.search, color: Colors.grey),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Buscar productos...',
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (value) => query.value = value,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // -------- Botón filtro (solo cuando onSelect == null) ----------
-        if (onSelect == null) ...[
-          const SizedBox(width: 8),
-          SizedBox(
-            height: 48,
-            width: 48,
-            child: IconButton(
-              icon: const Icon(Icons.tune, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: Theme.of(Get.context!).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 1,
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          // -------- Buscador ----------
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(14),
               ),
-              onPressed: () => showRightFilterPanel(Get.context!, controller),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar productos...',
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (value) => query.value = value,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+
+          // -------- Botón filtro (solo cuando onSelect == null) ----------
+          if (onSelect == null) ...[
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 48,
+              width: 48,
+              child: IconButton(
+                icon: const Icon(Icons.tune, color: Colors.white),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(Get.context!).colorScheme.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 1,
+                ),
+                onPressed: () => showRightFilterPanel(Get.context!, controller),
+              ),
+            ),
+          ],
         ],
-      ],
-    ),
-  );
-}         
+      ),
+    );
+  }
+
   Widget _cardProductWidget(ProductoModel producto, BuildContext context) {
     final theme = Theme.of(context);
-  final isCompra = esCompra;           // ya es bool
+    final isCompra = esCompra; // ya es bool
 
-  final etiqueta = isCompra ? 'Costo' : 'Precio';
-final double valor = isCompra
-    ? (producto.costo  ?? 0)   // si viene null → 0
-    : (producto.precio ?? 0);
+    final etiqueta = isCompra ? 'Costo' : 'Precio';
+    final double valor = isCompra
+        ? (producto.costo ?? 0) // si viene null → 0
+        : (producto.precio);
     return GestureDetector(
       onTap: () async {
         if (onSelect != null) {
@@ -238,8 +244,7 @@ final double valor = isCompra
       child: Card(
         color: Colors.white,
         margin: const EdgeInsets.symmetric(vertical: 8),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 2,
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -250,12 +255,11 @@ final double valor = isCompra
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
+                  color: theme.primaryColor.withAlpha(26),
                   borderRadius: BorderRadius.circular(12),
                   image: producto.img != null && producto.img!.isNotEmpty
                       ? DecorationImage(
-                          image: MemoryImage(
-                              Uint8List.fromList(producto.img!)),
+                          image: MemoryImage(Uint8List.fromList(producto.img!)),
                           fit: BoxFit.cover,
                         )
                       : null,
@@ -278,8 +282,10 @@ final double valor = isCompra
                       ),
                     ),
                     const SizedBox(height: 4),
-                  Text(        '$etiqueta: L. ${valor.toStringAsFixed(2)}',
-                      style: theme.textTheme.bodyMedium),
+                    Text(
+                      '$etiqueta: L. ${valor.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
                     Text(
                       'Stock: ${producto.stock}',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -302,10 +308,7 @@ final double valor = isCompra
       ),
     );
   }
-
 }
-
-
 
 class _FiltroChip extends StatelessWidget {
   final String label;
@@ -318,8 +321,7 @@ class _FiltroChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.color,
-    Key? key,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -343,6 +345,7 @@ class _FiltroChip extends StatelessWidget {
     );
   }
 }
+
 class _PanelFiltros extends StatelessWidget {
   final ProductsController controller;
 
@@ -475,32 +478,38 @@ class _PanelFiltros extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 24),
-                    const Text(
-                      "Categorías",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 12),
                     Obx(() {
                       if (controller.sugerenciasCategorias.isEmpty) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        ); // o SizedBox.shrink()
+                        return const SizedBox.shrink(); // Oculta todo el bloque si no hay categorías
                       }
 
-                      return Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: controller.sugerenciasCategorias.map((cat) {
-                          final selected =
-                              controller.categoriaFiltro.value == cat.nombre;
-                          return _FiltroChip(
-                            label: cat.nombre,
-                            selected: selected,
-                            onTap: () =>
-                                controller.categoriaFiltro.value = cat.nombre,
-                            color: primary,
-                          );
-                        }).toList(),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Categorías",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: controller.sugerenciasCategorias.map((
+                              cat,
+                            ) {
+                              final selected =
+                                  controller.categoriaFiltro.value ==
+                                  cat.nombre;
+                              return _FiltroChip(
+                                label: cat.nombre,
+                                selected: selected,
+                                onTap: () => controller.categoriaFiltro.value =
+                                    cat.nombre,
+                                color: primary,
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       );
                     }),
 

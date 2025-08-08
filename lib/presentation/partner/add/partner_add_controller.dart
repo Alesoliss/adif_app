@@ -6,8 +6,7 @@ import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/services/services.dart';
 
 class PartnerAddController extends GetxController {
-
-    PartnerAddController({bool esProveedor = false, int? id}) {
+  PartnerAddController({bool esProveedor = false, int? id}) {
     this.esProveedor.value = esProveedor;
     if (id != null) {
       this.id.value = id;
@@ -31,7 +30,7 @@ class PartnerAddController extends GetxController {
 
   // Reglas de longitud (incluyendo guiones)
   static const int _dniLenWithDashes = 15; // 0000-0000-00000 => 15
-  static const int _telLenWithDashes = 9;  // 0000-0000 => 9
+  static const int _telLenWithDashes = 9; // 0000-0000 => 9
 
   @override
   void onInit() {
@@ -118,12 +117,12 @@ class PartnerAddController extends GetxController {
 
       if (id.value == null) {
         // Insert
-         print("GUARDADO CON EXITO:" + partner.toJson().toString());
+        debugPrint("GUARDADO CON EXITO: ${partner.toJson()}");
         final newId = await DatabaseHelper.insert(
           ServiceStrings.socios,
           partner.toJson(),
         );
-        print("GUARDADO CON EXITO:" + newId.toString());
+        debugPrint("GUARDADO CON EXITO: $newId");
         id.value = newId;
         nuevo(); // Limpia para capturar otro
       } else {
@@ -138,8 +137,11 @@ class PartnerAddController extends GetxController {
       }
     } catch (e, st) {
       debugPrint("❌ No se pudo guardar: $e\n$st");
-      Get.snackbar('Error', 'No se pudo guardar',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'No se pudo guardar',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -162,8 +164,10 @@ class PartnerAddController extends GetxController {
     } else if (digits.length > 8) {
       final part1 = digits.substring(0, 4);
       final part2 = digits.substring(4, 8);
-      final part3 =
-          digits.substring(8, digits.length > 13 ? 13 : digits.length);
+      final part3 = digits.substring(
+        8,
+        digits.length > 13 ? 13 : digits.length,
+      );
       digits = '$part1-$part2-$part3';
     }
     return digits;
