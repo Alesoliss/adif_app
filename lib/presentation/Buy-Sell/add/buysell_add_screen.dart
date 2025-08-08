@@ -238,7 +238,7 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                       ? 'La fecha es obligatoria'
                       : null,
                 ),
-                onTap: () => controller.pickFechaVencimiento(context),
+          onTap: () => controller.pickFechaVencimientoAlt(Get.context!),
               ),
 
             const SizedBox(height: 20),
@@ -407,21 +407,16 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
   }
 }
 
-class _DetalleCard extends StatelessWidget {
+class _DetalleCard extends StatefulWidget {
   final BuySellDetails detalle;
   final int index;
   final bool esCompra;
-  final void Function({
-    required int index,
-    double? precio,
-    double? cantidad,
-    double? factor,
-  })
-  onUpdate;
+  final void Function({required int index, double? precio, double? cantidad, double? factor}) onUpdate;
   final void Function(int) onInc;
   final void Function(int) onDec;
 
   const _DetalleCard({
+    super.key,
     required this.detalle,
     required this.index,
     required this.esCompra,
@@ -431,8 +426,51 @@ class _DetalleCard extends StatelessWidget {
   });
 
   @override
+  State<_DetalleCard> createState() => _DetalleCardState();
+}
+
+class _DetalleCardState extends State<_DetalleCard> {
+  late final TextEditingController precioCtrl;
+  late final TextEditingController cantidadCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    precioCtrl   = TextEditingController(text: widget.detalle.precio.toStringAsFixed(2));
+    cantidadCtrl = TextEditingController(text: widget.detalle.cantidad.toStringAsFixed(0));
+  }
+
+  @override
+  void didUpdateWidget(covariant _DetalleCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final precioTxt   = widget.detalle.precio.toStringAsFixed(2);
+    final cantidadTxt = widget.detalle.cantidad.toStringAsFixed(0);
+
+    if (precioCtrl.text != precioTxt) {
+      precioCtrl.value = precioCtrl.value.copyWith(
+        text: precioTxt,
+        selection: TextSelection.collapsed(offset: precioTxt.length),
+      );
+    }
+    if (cantidadCtrl.text != cantidadTxt) {
+      cantidadCtrl.value = cantidadCtrl.value.copyWith(
+        text: cantidadTxt,
+        selection: TextSelection.collapsed(offset: cantidadTxt.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    precioCtrl.dispose();
+    cantidadCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final d = detalle;
+    final d = widget.detalle;
+
     return Card(
       color: Colors.white,
       elevation: 2,
@@ -442,32 +480,27 @@ class _DetalleCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Producto
-            Text(
-              d.productoNombre,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Text(d.productoNombre, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-
-            // Precio + Cantidad (50/50)
             Row(
               children: [
                 Expanded(
                   child: TextField(
-                    keyboardType: TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
+                    controller: precioCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Precio',
                       isDense: true,
                       border: UnderlineInputBorder(),
                     ),
-                    controller: TextEditingController(
-                      text: d.precio.toStringAsFixed(2),
+                    inputFormatters: [
+                      // permite decimales con punto y 2 decimales
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
+                    ],
+                    onChanged: (v) => widget.onUpdate(
+                      index: widget.index,
+                      precio: double.tryParse(v) ?? 0,
                     ),
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (v) =>
-                        onUpdate(index: index, precio: double.tryParse(v) ?? 0),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -475,41 +508,28 @@ class _DetalleCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Cantidad',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
+                      const Text('Cantidad', style: TextStyle(fontSize: 12, color: Colors.grey)),
                       const SizedBox(height: 4),
-
                       Row(
                         children: [
                           _CircleIconButton(
                             icon: Icons.remove,
-                            onTap: () => onDec(index),
+                            onTap: () => widget.onDec(widget.index),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: TextField(
+                              controller: cantidadCtrl,
                               textAlign: TextAlign.center,
                               keyboardType: TextInputType.number,
-
                               decoration: InputDecoration(
                                 isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                               ),
-                              controller: TextEditingController(
-                                text: d.cantidad.toStringAsFixed(0),
-                              ),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              onChanged: (v) => onUpdate(
-                                index: index,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              onChanged: (v) => widget.onUpdate(
+                                index: widget.index,
                                 cantidad: double.tryParse(v) ?? 1,
                               ),
                             ),
@@ -517,7 +537,7 @@ class _DetalleCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           _CircleIconButton(
                             icon: Icons.add,
-                            onTap: () => onInc(index),
+                            onTap: () => widget.onInc(widget.index),
                           ),
                         ],
                       ),
@@ -526,63 +546,31 @@ class _DetalleCard extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
-            // Factor (solo compras) + Total
-            if (esCompra)
+            if (widget.esCompra)
               Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Factor',
-                        isDense: true,
-                        border: UnderlineInputBorder(),
-                      ),
-                      controller: TextEditingController(
-                        text: d.factor.toStringAsFixed(2),
-                      ),
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (v) => onUpdate(
-                        index: index,
-                        factor: double.tryParse(v) ?? 1,
-                      ),
+                      controller: TextEditingController(text: d.factor.toStringAsFixed(2)), // si quieres que también sea persistente, haz otro controller.
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'Factor', isDense: true, border: UnderlineInputBorder()),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))],
+                      onChanged: (v) => widget.onUpdate(index: widget.index, factor: double.tryParse(v) ?? 1),
                     ),
                   ),
                   const SizedBox(width: 24),
-                  Text(
-                    'LPS ${d.total.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('LPS ${d.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               )
             else
-              Row(
-                children: [
-                  const Spacer(),
-                  Text(
-                    'LPS ${d.total.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+              Row(children: [const Spacer(), Text('LPS ${d.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
           ],
         ),
       ),
     );
   }
 }
-
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -597,12 +585,15 @@ class _CircleIconButton extends StatelessWidget {
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: const SizedBox(
+        child: SizedBox(
           width: 32,
           height: 32,
-          child: Center(child: Icon(Icons.add, color: Colors.white, size: 20)),
+          child: Center(
+            child: Icon(icon, color: Colors.white, size: 20), // <— usa el parámetro
+          ),
         ),
       ),
     );
   }
 }
+

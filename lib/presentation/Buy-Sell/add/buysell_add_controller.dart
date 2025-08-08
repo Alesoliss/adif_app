@@ -1,4 +1,6 @@
 // lib/presentation/buy_sell/add/buysell_add_controller.dart
+import 'package:edu_app/presentation/products/list/products_controller.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -191,20 +193,21 @@ class BuySellAddController extends GetxController {
     }
   }
 
-  Future<void> pickFechaVencimiento(BuildContext context) async {
-    final hoyHN = DateTime.now().subtract(const Duration(hours: 6));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _fechaVencimiento ?? hoyHN,
-      firstDate: hoyHN,
-      lastDate: DateTime(hoyHN.year + 5),
-      locale: const Locale('es', 'ES'),
-    );
-    if (picked != null) {
-      _fechaVencimiento = picked;
-      fecha.text = DateFormat('yyyy-MM-dd').format(picked);
-    }
-  }
+Future<void> pickFechaVencimientoAlt(BuildContext context) async {
+  final hoy = DateTime.now();
+  DatePicker.showDatePicker(
+    context,
+    showTitleActions: true,
+    minTime: DateTime(hoy.year, hoy.month, hoy.day),
+    maxTime: DateTime(hoy.year + 5),
+    currentTime: _fechaVencimiento ?? hoy,
+    locale: LocaleType.es, // trae sus propias traducciones
+    onConfirm: (date) {
+      _fechaVencimiento = date;
+      fecha.text = DateFormat('yyyy-MM-dd').format(date);
+    },
+  );
+}
 
   // =================== CRUD  ============================ //
   Future<void> saveProducto() async {
@@ -222,6 +225,11 @@ class BuySellAddController extends GetxController {
       ServiceStrings.productos,
       nuevo.toJson(),
     );
+
+      if (Get.isRegistered<ProductsController>()) {
+    final pc = Get.find<ProductsController>();
+    await pc.loadProductos(); // recarga desde BD
+  }
 
     addEmptyDetalle(productoId: newId, productoNombre: nuevo.nombre);
     producto.clear();

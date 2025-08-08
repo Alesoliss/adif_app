@@ -23,11 +23,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: MainRoutes.splash,
       getPages: MainPages.pages,
-       localizationsDelegates: const [
-        // GlobalMaterialLocalizations.delegate,
-        // GlobalWidgetsLocalizations.delegate,
-        // GlobalCupertinoLocalizations.delegate,
-      ],
       supportedLocales: const [
         Locale('en', ''),
         Locale('es', ''),

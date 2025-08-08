@@ -107,7 +107,6 @@ class DatabaseHelper {
         compraId INTEGER NOT NULL,
         linea INTEGER NOT NULL,
         productoId INTEGER NOT NULL,
-        costo REAL NOT NULL,
         precio REAL NOT NULL,
         cantidad REAL NOT NULL,
         factor REAL NOT NULL,

@@ -4,6 +4,7 @@ import 'package:edu_app/models/socio_model.dart';
 import 'package:edu_app/presentation/partner/list/partner_screen_controller.dart';
 import 'package:edu_app/routes/app_routes.dart';
 import 'package:edu_app/services/partnerService.dart';
+import 'package:edu_app/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
