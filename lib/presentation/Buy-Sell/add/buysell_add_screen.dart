@@ -28,30 +28,14 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     Get.put(
       BuySellAddController(esCompra: args['esCompra'] ?? false, id: args['id']),
     );
+
     return Scaffold(
       appBar: _buildAppBar(theme),
       body: _buildBody(theme, context),
       bottomNavigationBar: _buildFooter(theme),
-      floatingActionButton: Obx(
-        () => Visibility(
-          visible: controller.showFab.value,
-          maintainSize: true, // evita re-layout brusco
-          maintainAnimation: true,
-          maintainState: true,
-          child: FloatingActionButton(
-            onPressed: () {
-              if (controller.producto.text.trim().isNotEmpty) {
-                controller.saveProducto();
-              }
-            },
-            child: const Icon(Icons.add),
-          ),
-        ),
-      ),
     );
   }
 
-  // -------------------- APPBAR ---------------------------
   PreferredSizeWidget _buildAppBar(ThemeData theme) {
     return AppBar(
       backgroundColor: Colors.transparent,
@@ -90,144 +74,136 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     );
   }
 
-  // -------------------- CUERPO ---------------------------
   Widget _buildBody(ThemeData theme, BuildContext context) {
-    return Obx(
-      () => SingleChildScrollView(
-        controller: controller.scrollCtrl,
-        padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 14,
-          bottom: 120,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ----- Socio -----
-            Text(
-              controller.esCompra.isTrue
-                  ? 'Información del proveedor'
-                  : 'Información del cliente',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.grey,
-              ),
+    return Obx(() {
+      final header = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Socio
+          Text(
+            controller.esCompra.isTrue
+                ? 'Información del proveedor'
+                : 'Información del cliente',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: Colors.grey,
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    readOnly: controller.socioId != null,
-                    controller: controller.socio,
-                    decoration: InputDecoration(
-                      labelText: controller.esCompra.isTrue
-                          ? 'Proveedor'
-                          : 'Cliente',
-                      hintText: controller.esCompra.isTrue
-                          ? 'Selecciona un proveedor'
-                          : 'Selecciona un cliente',
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: controller.nombreInvalido.isTrue
-                              ? Colors.red
-                              : const Color(0xFFE0E0E0),
-                        ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  readOnly: controller.socioId != null,
+                  controller: controller.socio,
+                  decoration: InputDecoration(
+                    labelText: controller.esCompra.isTrue
+                        ? 'Proveedor'
+                        : 'Cliente',
+                    hintText: controller.esCompra.isTrue
+                        ? 'Selecciona un proveedor'
+                        : 'Selecciona un cliente',
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: controller.nombreInvalido.isTrue
+                            ? Colors.red
+                            : const Color(0xFFE0E0E0),
                       ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: controller.nombreInvalido.isTrue
-                              ? Colors.red
-                              : theme.colorScheme.primary,
-                        ),
-                      ),
-                      errorText: controller.nombreInvalido.isTrue
-                          ? 'El ${controller.esCompra.isTrue ? 'proveedor' : 'cliente'} es obligatorio'
-                          : null,
                     ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: controller.nombreInvalido.isTrue
+                            ? Colors.red
+                            : theme.colorScheme.primary,
+                      ),
+                    ),
+                    errorText: controller.nombreInvalido.isTrue
+                        ? 'El ${controller.esCompra.isTrue ? 'proveedor' : 'cliente'} es obligatorio'
+                        : null,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final selected = await _openPartnerSelector(
+                      context,
+                      controller.esCompra.value,
+                    );
+                    if (selected != null) {
+                      controller.setPartnerSeleccionado(selected);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    onPressed: () async {
-                      final selected = await _openPartnerSelector(
-                        context,
-                        controller.esCompra.value,
-                      );
+                  ),
+                  child: const Icon(Icons.search, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Producto
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: controller.producto,
+                  decoration: const InputDecoration(
+                    labelText: 'Producto',
+                    hintText: 'Selecciona o escribe un producto',
+                    border: UnderlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (controller.producto.text.trim().isNotEmpty) {
+                      controller.saveProducto();
+                    } else {
+                      final selected = await _openProductSelector(context);
                       if (selected != null) {
-                        controller.setPartnerSeleccionado(selected);
+                        controller.setProductoSeleccionado(selected);
                       }
-                    },
-                    child: const Icon(Icons.search, color: Colors.white),
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
+                  child: const Icon(Icons.add, color: Colors.white),
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // ----- Producto -----
-            if (!controller.showFab.value)
-              Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: controller.producto,
-                      decoration: const InputDecoration(
-                        labelText: 'Producto',
-                        hintText: 'Selecciona o escribe un producto',
-                        border: UnderlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () async {
-                        if (controller.producto.text.trim().isNotEmpty) {
-                          controller.saveProducto();
-                        } else {
-                          final selected = await _openProductSelector(context);
-                          if (selected != null) {
-                            controller.setProductoSeleccionado(selected);
-                          }
-                        }
-                      },
-                      child: const Icon(Icons.add, color: Colors.white),
-                    ),
-                  ),
-                ],
               ),
-            const SizedBox(height: 20),
+            ],
+          ),
+          const SizedBox(height: 20),
 
-            // ----- Tipo de pago -----
-            Row(
-              children: [
-                _pagoButton(context, PaymentType.contado, 'Contado'),
-                const SizedBox(width: 10),
-                _pagoButton(context, PaymentType.credito, 'Crédito'),
-              ],
-            ),
+          // Tipo de pago
+          Row(
+            children: [
+              _pagoButton(context, PaymentType.contado, 'Contado'),
+              const SizedBox(width: 10),
+              _pagoButton(context, PaymentType.credito, 'Crédito'),
+            ],
+          ),
 
-            // ----- Fecha vencimiento -----
-            if (controller.pago.value == PaymentType.credito)
-              TextField(
+          // Fecha vencimiento
+          if (controller.pago.value == PaymentType.credito)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: TextField(
                 controller: controller.fecha,
                 readOnly: true,
                 decoration: InputDecoration(
@@ -238,23 +214,22 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                       ? 'La fecha es obligatoria'
                       : null,
                 ),
-          onTap: () => controller.pickFechaVencimientoAlt(Get.context!),
+                onTap: () => controller.pickFechaVencimientoAlt(Get.context!),
               ),
+            ),
 
-            const SizedBox(height: 20),
+          // Método de pago solo si venta al contado
+        
+        ],
+      );
 
-            // ----- Detalles -----
-            if (controller.detalles.isNotEmpty) ...[
-              const Text(
-                'Detalles:',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+      final detallesList = Expanded(
+        child: controller.detalles.isEmpty
+            ? const Center(child: Text('Sin productos aún'))
+            : ListView.separated(
+                padding: const EdgeInsets.only(top: 8, bottom: 120),
                 itemCount: controller.detalles.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (_, i) {
                   final d = controller.detalles[i];
                   return _DetalleCard(
@@ -267,17 +242,25 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
                   );
                 },
               ),
-            ],
+      );
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            header,
+            const SizedBox(height: 8),
+            detallesList,
           ],
         ),
-      ),
-    );
+      );
+    });
   }
 
-  // -------------------- FOOTER ---------------------------
   Widget _buildFooter(ThemeData theme) {
     return Obx(() {
-      final total = controller.detalles.fold<double>(0, (s, d) => s + d.total);
+      final total = controller.totalActual;
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: const BoxDecoration(
@@ -297,30 +280,28 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
               onPressed: () async {
                 await controller.validateAndSave();
-                if (controller.detalles.isEmpty) {
-                  SnackbarHelper.show(
-                    type: SnackType.error,
-                    message: 'Debe tener un producto por lo menos',
-                  );
-                }
-                if (!controller.nombreInvalido.isTrue &&
-                    controller.detalles.isNotEmpty) {
-                  SnackbarHelper.show(
-                    type: SnackType.success,
-                    message:
-                        'La ${controller.esCompra.isTrue ? 'compra' : 'venta'} guardada correctamente',
-                  );
-                }
+                  if (!controller.nombreInvalido.value &&
+      controller.detalles.isNotEmpty) {
+    // Mostrar snackbar
+    SnackbarHelper.show(
+      type: SnackType.success,
+      message: controller.id.value == null
+          ? '"${controller.esCompra.isTrue ? 'Compra' : 'Venta'}" guardada correctamente'
+          : 'Cambios guardados con éxito',
+    );
+
+    // Resetear todo si era nuevo
+    if (controller.id.value == null) {
+      controller.resetAll();
+    }  } 
               },
               child: Obx(
                 () => Text(
@@ -338,7 +319,6 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
     });
   }
 
-  // -------------------- UTILS ----------------------------
   Widget _pagoButton(BuildContext ctx, PaymentType tipo, String label) {
     final isSelected = controller.pago.value == tipo;
     return Expanded(
@@ -372,24 +352,21 @@ class AddBuySellScreen extends GetView<BuySellAddController> {
       ),
       builder: (_) => PartnerScreen(
         onSelect: (p) => Navigator.pop(context, p),
-        initialName: esCompra
-            ? ServiceStrings.proveedores
-            : ServiceStrings.clientes,
+        initialName:
+            esCompra ? ServiceStrings.proveedores : ServiceStrings.clientes,
       ),
     );
   }
 
   Future<ProductoModel?> _openProductSelector(BuildContext context) {
-    final idsYaSeleccionados = controller.detalles
-        .map((d) => d.productoId)
-        .toSet();
+    final idsYaSeleccionados =
+        controller.detalles.map((d) => d.productoId).toSet();
     final esCompraSeleccionado = controller.esCompra.value;
 
     final prodCtrl = Get.isRegistered<ProductsController>()
-        ? Get.find<ProductsController>() // ya existe
-        : Get.put(ProductsController()); // se crea nuevo
+        ? Get.find<ProductsController>()
+        : Get.put(ProductsController());
 
-    // 3️⃣  Limpiar / fijar filtros solo en esa instancia
     prodCtrl.resetFilters(estado: ProductoEstado.activos);
     return showModalBottomSheet<ProductoModel>(
       context: context,

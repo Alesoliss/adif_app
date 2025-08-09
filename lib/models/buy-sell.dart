@@ -1,3 +1,18 @@
+// models/buy-sell.dart
+enum PaymentMethod { efectivo, transferencia }
+
+extension PaymentMethodX on PaymentMethod {
+  int toInt() => switch (this) {
+    PaymentMethod.efectivo => 1,
+    PaymentMethod.transferencia => 2,
+  };
+  static PaymentMethod? fromInt(int? v) => switch (v) {
+    1 => PaymentMethod.efectivo,
+    2 => PaymentMethod.transferencia,
+    _ => null,
+  };
+}
+
 class BuySell {
   final int? id;
   final int sociosId;
@@ -10,6 +25,7 @@ class BuySell {
   final String? comentario;
   final bool? esCompra;
   final int? estado;
+  final int? metodo;
   final List<BuySellDetalleModel> detalles;
 
   BuySell({
@@ -23,6 +39,7 @@ class BuySell {
     this.comentario,
     this.esCompra,
     this.estado,
+    this.metodo,
     this.socios = "",
     this.detalles = const [],
   });
@@ -39,6 +56,7 @@ factory BuySell.fromJson(Map<String, dynamic> json) {
     comentario: json['comentario'] as String?,
     esCompra: (json['esCompra'] ?? 0) == 1, // ✅ conversión int->bool
     estado: json['estado'] as int?,
+      metodo: json['metodo'] as int?,
     socios: json['socios'] as String,
   );
 }
@@ -51,6 +69,7 @@ factory BuySell.fromJson(Map<String, dynamic> json) {
       'total': total,
       'esCredito': esCredito ? 1 : 0,
       'saldo': saldo,
+      'metodo': metodo,
       'comentario': comentario,
     };
   }

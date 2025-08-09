@@ -113,6 +113,7 @@ ORDER BY fecha DESC, id DESC;
       'esCredito': venta.esCredito ? 1 : 0,
       'saldo': venta.esCredito ? venta.total : 0.0,
       'comentario': venta.comentario,
+      'metodo': venta.metodo,
        'estado': 1,
     });
 

@@ -4,59 +4,31 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import 'package:edu_app/models/buy-sell.dart';
-import 'package:edu_app/presentation/Buy-Sell/list/buysell_controller.dart';
+import 'package:edu_app/presentation/Buy-Sell/list/buysell_controller.dart' as bs;
 import 'package:edu_app/routes/app_routes.dart';
 
 final _fmtLps = NumberFormat.currency(
-  locale: 'es_HN', // o 'es_ES'
+  locale: 'es_HN',
   symbol: 'LPS ',
   decimalDigits: 2,
 );
-
-// Estados para filtrar en UI
-enum BuyFiltroEstado { todos, anuladas, pagadas, credito }
-
-// Badge/estado visual calculado por registro (el controller lo define)
-enum BuyEstadoVisual { anulada, pagada, credito }
 
 class BuySellScreen extends StatelessWidget {
   final bool esCompra;
   BuySellScreen({super.key, this.esCompra = false});
 
-  final controller = Get.put(BuySellController());
-  final searchController = TextEditingController();
+  final controller = Get.put(bs.BuySellController());
+  final TextEditingController _searchController = TextEditingController();
   final RxString query = ''.obs;
 
   @override
   Widget build(BuildContext context) {
-    final titulo = esCompra ? 'Compras' : 'Ventas';
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: IconButton(
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: const CircleBorder(),
-              elevation: 1,
-            ),
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
-            onPressed: Get.back,
-          ),
-        ),
-        centerTitle: true,
-        title: Text(titulo, style: const TextStyle(color: Colors.black87)),
-      ),
+      appBar: _buildAppBar(context),
       body: Column(
         children: [
-          _buildSearchBar(),
+          _buildSearchBar(context),
           Expanded(
             child: Obx(() {
               if (controller.loading.value) {
@@ -78,39 +50,99 @@ class BuySellScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _onAddPressed(context),
-        child: const Icon(Icons.add),
+    );
+  }
+
+  // -------------------- AppBar --------------------
+  AppBar _buildAppBar(BuildContext context) {
+    final titulo = esCompra ? 'Compras' : 'Ventas';
+    return AppBar(
+      title: Text(titulo, style: const TextStyle(color: Colors.black87)),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+        onPressed: () => Get.back(),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.add, color: Colors.black87),
+          onPressed: () => _onAddPressed(context),
+        ),
+      ],
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+    );
+  }
+
+  // -------------------- Search + Filtro --------------------
+  Widget _buildSearchBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar por socio...',
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (v) => query.value = v,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.tune, color: Colors.white),
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: _showFilterPanel,
+          ),
+        ],
       ),
     );
   }
 
-  // -------------------- Buscar --------------------
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(14),
+  void _showFilterPanel() {
+    showGeneralDialog(
+      context: Get.context!,
+      barrierLabel: "Filtro",
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) => Align(
+        alignment: Alignment.centerRight,
+        child: FractionallySizedBox(
+          widthFactor: 0.70,
+          child: Material(
+            borderRadius:
+                const BorderRadius.horizontal(left: Radius.circular(20)),
+            child: _PanelFiltros(controller: controller),
+          ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Row(
-          children: [
-            const Icon(Icons.search, color: Colors.grey),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Buscar por socio...',
-                  border: InputBorder.none,
-                ),
-                onChanged: (v) => query.value = v,
-              ),
-            ),
-          ],
-        ),
+      ),
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+        child: child,
       ),
     );
   }
@@ -121,12 +153,14 @@ class BuySellScreen extends StatelessWidget {
     final etiquetaTotal = esCompra ? 'Total compra' : 'Total venta';
     final estadoVisual = controller.calcularEstadoVisual(b);
     final isAbonable = (b.esCredito == true) && ((b.saldo ?? 0) > 0);
+    final metodoText = controller.metodoLabel(b);
+    final metodoIcon = controller.metodoIcon(b);
 
     // badge
     final (badgeText, badgeBg, badgeFg) = switch (estadoVisual) {
-      BuyEstadoVisual.anulada => ('Anulada', theme.colorScheme.primary, Colors.white),
-      BuyEstadoVisual.credito => ('Crédito', Colors.red.shade600, Colors.white),
-      BuyEstadoVisual.pagada  => ('Pagada', Colors.green.shade600, Colors.white),
+      bs.BuyEstadoVisual.anulada => ('Anulada', theme.colorScheme.primary, Colors.white),
+      bs.BuyEstadoVisual.credito => ('Crédito', Colors.red.shade600, Colors.white),
+      bs.BuyEstadoVisual.pagada  => ('Pagada', Colors.green.shade600, Colors.white),
     };
 
     return Card(
@@ -140,7 +174,7 @@ class BuySellScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // icono de “detalles”
+              // icono/shortcut a detalles
               InkWell(
                 onTap: () => _openDetalleModal(context, b),
                 borderRadius: BorderRadius.circular(28),
@@ -173,8 +207,10 @@ class BuySellScreen extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         _infoRow(
-                          (estadoVisual == BuyEstadoVisual.credito) ? 'Vence' : 'Fecha',
-                          (estadoVisual == BuyEstadoVisual.credito)
+                          (estadoVisual == bs.BuyEstadoVisual.credito)
+                              ? 'Vence'
+                              : 'Fecha',
+                          (estadoVisual == bs.BuyEstadoVisual.credito)
                               ? (b.fechaVence ?? '—')
                               : (b.fecha ?? '—'),
                           theme,
@@ -184,18 +220,39 @@ class BuySellScreen extends StatelessWidget {
                           _fmtLps.format(b.total ?? 0),
                           theme,
                         ),
-                        if (estadoVisual == BuyEstadoVisual.credito)
+                        if (estadoVisual == bs.BuyEstadoVisual.credito)
                           _infoRow('Saldo', _fmtLps.format(b.saldo ?? 0), theme),
+
+                        // Método (efectivo/transferencia) si viene
+                        if ((metodoText).isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(metodoIcon, size: 16),
+                                const SizedBox(width: 6),
+                                Text(metodoText,
+                                    style: theme.textTheme.labelMedium),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ],
                 ),
               ),
 
-              // badge a la derecha
+              // badge estado
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: badgeBg,
                   borderRadius: BorderRadius.circular(12),
@@ -227,8 +284,9 @@ class BuySellScreen extends StatelessWidget {
     );
   }
 
-  // -------------------- Dialog Acciones --------------------
-  void _showAccionesDialog(BuildContext context, BuySell b, bool isAbonable) {
+  // -------------------- Acciones --------------------
+  void _showAccionesDialog(
+      BuildContext context, BuySell b, bool isAbonable) {
     final color = Theme.of(context).colorScheme.primary;
 
     Widget option(IconData icon, String label, VoidCallback onTap) => InkWell(
@@ -257,15 +315,19 @@ class BuySellScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding:
+            const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          padding:
+              const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('¿Qué deseas hacer?',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -273,16 +335,12 @@ class BuySellScreen extends StatelessWidget {
                   option(Icons.visibility_rounded, 'Ver detalles', () {
                     _openDetalleModal(context, b);
                   }),
-                  option(Icons.mode_comment_outlined, 'Comentario', () async {
-                    // TODO: navega a comentario
-                    // Get.toNamed(MainRoutes.comentarioBuySell, arguments: b);
-                    Get.snackbar('Comentario', 'Abrir comentarios de ${b.id}');
+                  option(Icons.mode_comment_outlined, 'Comentario', () {
+                    controller.showComentarioDialog(context, b);
                   }),
                   if (isAbonable)
-                    option(Icons.attach_money_rounded, 'Abonar', () async {
-                      // TODO: navega a abonos
-                      // Get.toNamed(MainRoutes.abonar, arguments: b);
-                      Get.snackbar('Abonar', 'Abrir abono de ${b.id}');
+                    option(Icons.attach_money_rounded, 'Abonar', () {
+                      controller.showAbonarDialog(context, b);
                     }),
                 ],
               ),
@@ -295,7 +353,9 @@ class BuySellScreen extends StatelessWidget {
   }
 
   // -------------------- Modal Detalle simple --------------------
-  void _openDetalleModal(BuildContext context, BuySell b) {
+  Future<void> _openDetalleModal(BuildContext context, BuySell b) async {
+    final detalles = await controller.cargarDetalles(b);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -329,34 +389,33 @@ class BuySellScreen extends StatelessWidget {
               Text('Saldo: ${_fmtLps.format(b.saldo ?? 0)}'),
               Text('Vence: ${b.fechaVence ?? '—'}'),
             ],
+            if (b.comentario?.isNotEmpty == true)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text('Comentario: ${b.comentario!}'),
+              ),
             const SizedBox(height: 12),
+            const Text('Productos', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: detalles.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (_, i) {
+                  final d = detalles[i];
+                  return ListTile(
+                    dense: true,
+                    title: Text('ID ${d.productoId}  •  L ${d.precio.toStringAsFixed(2)}'),
+                    subtitle: Text('Cant: ${d.cantidad}  x  Factor: ${d.factor}'),
+                    trailing: Text(_fmtLps.format(d.total)),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
           ],
         ),
-      ),
-    );
-  }
-
-  // -------------------- Filtro lateral --------------------
-  void _showRightFilterPanel(BuildContext context, BuySellController c) {
-    showGeneralDialog(
-      context: context,
-      barrierLabel: "Filtro",
-      barrierDismissible: true,
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (_, __, ___) => Align(
-        alignment: Alignment.centerRight,
-        child: FractionallySizedBox(
-          widthFactor: 0.70,
-          child: Material(
-            child: _PanelFiltros(controller: c),
-          ),
-        ),
-      ),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-            .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-        child: child,
       ),
     );
   }
@@ -364,18 +423,18 @@ class BuySellScreen extends StatelessWidget {
   // -------------------- Crear compra/venta --------------------
   Future<void> _onAddPressed(BuildContext context) async {
     final result = await Get.toNamed(
-      MainRoutes.addBuySell, // AJUSTA tu ruta real
+      MainRoutes.addBuySell,
       arguments: {'esCompra': esCompra},
     );
     if (result == true) {
-      controller.loadBuySells(); // refresca al volver
+      controller.loadBuySells(); // refrescar
     }
   }
 }
 
 // =================== PANEL DE FILTROS ===================
 class _PanelFiltros extends StatelessWidget {
-  final BuySellController controller;
+  final bs.BuySellController controller;
   const _PanelFiltros({required this.controller});
 
   @override
@@ -389,13 +448,19 @@ class _PanelFiltros extends StatelessWidget {
           children: [
             Row(
               children: [
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                const Text("Filtros", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const Text("Filtros",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    controller.estadoFiltro.value = BuyFiltroEstado.todos;
-                    controller.rangoPrecioFiltro.value = const RangeValues(0, 100000);
+                    controller.estadoFiltro.value = bs.BuyFiltroEstado.todos;
+                    controller.rangoPrecioFiltro.value =
+                        const RangeValues(0, 100000);
                     Navigator.pop(context);
                   },
                   child: const Text("Limpiar"),
@@ -406,10 +471,10 @@ class _PanelFiltros extends StatelessWidget {
 
             // Estado: Anuladas / Pagadas / Crédito
             Obx(() {
-              final estados = <BuyFiltroEstado>[
-                BuyFiltroEstado.anuladas,
-                BuyFiltroEstado.pagadas,
-                BuyFiltroEstado.credito,
+              final estados = <bs.BuyFiltroEstado>[
+                bs.BuyFiltroEstado.anuladas,
+                bs.BuyFiltroEstado.pagadas,
+                bs.BuyFiltroEstado.credito,
               ];
               return Wrap(
                 spacing: 10,
@@ -417,21 +482,24 @@ class _PanelFiltros extends StatelessWidget {
                 children: estados.map((estado) {
                   final sel = controller.estadoFiltro.value == estado;
                   final label = switch (estado) {
-                    BuyFiltroEstado.anuladas => 'Anuladas',
-                    BuyFiltroEstado.pagadas  => 'Pagadas',
-                    BuyFiltroEstado.credito  => 'Crédito',
+                    bs.BuyFiltroEstado.anuladas => 'Anuladas',
+                    bs.BuyFiltroEstado.pagadas  => 'Pagadas',
+                    bs.BuyFiltroEstado.credito  => 'Crédito',
                     _ => 'Todos',
                   };
                   return GestureDetector(
                     onTap: () => controller.estadoFiltro.value = estado,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
                         color: sel ? primary : Colors.grey[200],
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: Text(label, style: TextStyle(color: sel ? Colors.white : Colors.black87)),
+                      child: Text(label,
+                          style: TextStyle(
+                              color: sel ? Colors.white : Colors.black87)),
                     ),
                   );
                 }).toList(),
@@ -441,7 +509,8 @@ class _PanelFiltros extends StatelessWidget {
             const SizedBox(height: 24),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text("Rango de totales", style: TextStyle(color: Colors.grey)),
+              child: Text("Rango de totales",
+                  style: TextStyle(color: Colors.grey)),
             ),
             Obx(() {
               final rv = controller.rangoPrecioFiltro.value;
@@ -450,12 +519,15 @@ class _PanelFiltros extends StatelessWidget {
                 children: [
                   RangeSlider(
                     values: rv,
-                    min: 0, max: 100000, divisions: 100,
+                    min: 0,
+                    max: 100000,
+                    divisions: 100,
                     labels: RangeLabels(
                       _fmtLps.format(rv.start),
                       _fmtLps.format(rv.end),
                     ),
-                    onChanged: (v) => controller.rangoPrecioFiltro.value = v,
+                    onChanged: (v) =>
+                        controller.rangoPrecioFiltro.value = v,
                     activeColor: primary,
                   ),
                   Text(
@@ -468,43 +540,6 @@ class _PanelFiltros extends StatelessWidget {
 
             const Spacer(),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// =================== CHIP ===================
-class _FiltroChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final Color color;
-
-  const _FiltroChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? color : Colors.grey[200],
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.w500,
-          ),
         ),
       ),
     );
