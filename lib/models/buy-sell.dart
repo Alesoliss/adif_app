@@ -1,7 +1,7 @@
 class BuySell {
   final int? id;
   final int sociosId;
-  final String? socios;
+  final String socios;
   final String fecha;
   final String? fechaVence;
   final double total;
@@ -27,22 +27,21 @@ class BuySell {
     this.detalles = const [],
   });
 
-  factory BuySell.fromJson(Map<String, dynamic> json) {
-    return BuySell(
-      id: json['id'] as int?,
-      sociosId: json['sociosId'] as int,
-      fecha: json['fecha'] as String,
-      fechaVence: json['fechaVence'] as String?,
-      total: (json['total'] as num).toDouble(),
-      esCredito: (json['esCredito'] ?? 0) == 1,
-      saldo: (json['saldo'] as num).toDouble(),
-      comentario: json['comentario'] as String?,
-      esCompra: json['esCompra'] as bool?,
-      estado: json['estado'] as int?,
-      socios: json['socios'] as String,
-    );
-  }
-
+factory BuySell.fromJson(Map<String, dynamic> json) {
+  return BuySell(
+    id: json['id'] as int?,
+    sociosId: json['sociosId'] as int,
+    fecha: json['fecha'] as String,
+    fechaVence: json['fechaVence'] as String?,
+    total: (json['total'] as num).toDouble(),
+    esCredito: (json['esCredito'] ?? 0) == 1,
+    saldo: (json['saldo'] as num).toDouble(),
+    comentario: json['comentario'] as String?,
+    esCompra: (json['esCompra'] ?? 0) == 1, // ✅ conversión int->bool
+    estado: json['estado'] as int?,
+    socios: json['socios'] as String,
+  );
+}
   Map<String, dynamic> toJson() {
     return {
       'id': id,

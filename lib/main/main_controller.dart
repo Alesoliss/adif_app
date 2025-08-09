@@ -1,3 +1,4 @@
+import 'package:edu_app/presentation/Buy-Sell/list/buysell_screen.dart';
 import 'package:edu_app/presentation/home/home_screen.dart';
 import 'package:edu_app/presentation/partner/list/partner_screen.dart';
 import 'package:edu_app/presentation/products/list/products_screen.dart';
@@ -15,9 +16,9 @@ class MainController extends GetxController {
     stackPages.value = [
       HomeScreen(),
        PartnerScreen(),
-      _PlaceholderScreen(title: 'Favoritos'),
-       ProductsScreen(),
-      _PlaceholderScreen(title: 'Perfil'),
+ BuySellScreen(esCompra: false), // Ventas
+  ProductsScreen(),
+  BuySellScreen(esCompra: true),  // Compras
     ];
     selectedPage.value = 0;
     super.onReady();

@@ -1,5 +1,6 @@
 import 'package:edu_app/models/buy-sell.dart';
 import 'package:edu_app/services/services.dart';
+import 'package:flutter/material.dart';
 
 class BuySellService {
   /// Inserta una compra y sus detalles, y ajusta stock/costo
@@ -60,39 +61,41 @@ Future<List<BuySell>> getAllBuySell() async {
   final db = await DatabaseHelper.initDB();
 
   const sql = '''
-    SELECT  c.id,
-            c.sociosId,
-            s.nombre          AS socios,
-            c.fecha,
-            c.fechaVence,
-            c.total,
-            c.esCredito,
-            c.saldo,
-            1                 AS esCompra,
-            c.estado
-    FROM    compras AS c
-    INNER JOIN socios AS s ON s.id = c.sociosId
+  SELECT *
+FROM (
+  SELECT  c.id            AS id,
+          c.sociosId      AS sociosId,
+          s.nombre        AS socios,
+          c.fecha         AS fecha,
+          c.fechaVence    AS fechaVence,
+          c.total         AS total,
+          c.esCredito     AS esCredito,
+          c.saldo         AS saldo,
+          1               AS esCompra,
+          c.estado        AS estado
+  FROM compras AS c
+  INNER JOIN socios AS s ON s.id = c.sociosId
 
-    UNION ALL
+  UNION ALL
 
-    SELECT  v.id,
-            v.sociosId,
-            s.nombre          AS socios,
-            v.fecha,
-            v.fechaVence,
-            v.total,
-            v.esCredito,
-            v.saldo,
-            0                 AS esCompra,
-            v.estado
-    FROM    ventas  AS v
-    INNER JOIN socios AS s ON s.id = v.sociosId
-
-    ORDER BY fecha DESC, id DESC;
+  SELECT  v.id            AS id,
+          v.sociosId      AS sociosId,
+          s.nombre        AS socios,
+          v.fecha         AS fecha,
+          v.fechaVence    AS fechaVence,
+          v.total         AS total,
+          v.esCredito     AS esCredito,
+          v.saldo         AS saldo,
+          0               AS esCompra,
+          v.estado        AS estado
+  FROM ventas AS v
+  INNER JOIN socios AS s ON s.id = v.sociosId
+)
+ORDER BY fecha DESC, id DESC;
   ''';
 
   final rows = await db.rawQuery(sql);
-
+  debugPrint(rows.toString());
   return rows.map((json) => BuySell.fromJson(json)).toList();
 }
 
